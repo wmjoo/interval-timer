@@ -58,11 +58,13 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 8px solid transparent;
+    border: 12px solid transparent;
     background: conic-gradient(from -90deg, var(--progress-color, #4caf50) 0%, var(--progress-color, #4caf50) var(--progress, 0%), rgba(255, 255, 255, 0.2) var(--progress, 0%));
-    mask: radial-gradient(circle, transparent 60%, black 60%);
-    -webkit-mask: radial-gradient(circle, transparent 60%, black 60%);
+    mask: radial-gradient(circle, transparent 55%, black 55%);
+    -webkit-mask: radial-gradient(circle, transparent 55%, black 55%);
     transition: --progress 0.1s ease, --progress-color 0.3s ease;
+    will-change: transform;
+    transform: translateZ(0);
   }
 
   .timer-content {
@@ -128,6 +130,32 @@
     font-size: 1.1rem;
   }
 
+  /* 프리셋 드롭다운 */
+  .preset-select {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1a237e;
+    font-weight: 600;
+    text-align: center;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231a237e' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 35px;
+  }
+
+  .preset-select:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+
   .sets-setting {
     grid-column: 1 / -1;
     text-align: center;
@@ -173,12 +201,14 @@
     transform: none;
   }
 
-  /* 하단 세트 인디케이터 */
+  /* 상단 세트 인디케이터 */
   .sets-indicator {
     display: flex;
     gap: 15px;
     justify-content: center;
     align-items: center;
+    margin-bottom: 20px;
+    padding-top: 60px;
   }
 
   .set-dot {
@@ -285,6 +315,11 @@
   </button>
   
   <div class="container">
+    <!-- 상단 세트 인디케이터 -->
+    <div class="sets-indicator" id="setsIndicator">
+      <!-- 세트 도트들이 여기에 동적으로 생성됩니다 -->
+    </div>
+
     <!-- 상단 원형 타이머 -->
     <div class="timer-section">
       <div class="circular-timer">
@@ -299,6 +334,12 @@
 
     <!-- 설정 패널 -->
     <div class="settings-panel">
+      <select id="presetSelect" class="preset-select">
+        <option value="">프리셋 선택 (선택사항)</option>
+        <option value="40/20/3">40/20/3 (운동 40초, 휴식 20초, 3세트)</option>
+        <option value="45/15/3">45/15/3 (운동 45초, 휴식 15초, 3세트)</option>
+        <option value="30/10/5">30/10/5 (운동 30초, 휴식 10초, 5세트)</option>
+      </select>
       <div class="settings-grid">
         <div class="setting-item">
           <div class="setting-label">운동 시간 (초)</div>
@@ -310,7 +351,7 @@
         </div>
         <div class="setting-item sets-setting">
           <div class="setting-label">총 세트 수</div>
-          <input type="number" id="totalSets" class="setting-input" value="5" min="1" max="20">
+          <input type="number" id="totalSets" class="setting-input" value="3" min="1" max="20">
         </div>
       </div>
     </div>
@@ -320,11 +361,6 @@
       <button id="startBtn" class="btn btn-primary">시작</button>
       <button id="pauseBtn" class="btn btn-secondary" disabled>일시정지</button>
       <button id="resetBtn" class="btn btn-secondary">리셋</button>
-    </div>
-
-    <!-- 하단 세트 인디케이터 -->
-    <div class="sets-indicator" id="setsIndicator">
-      <!-- 세트 도트들이 여기에 동적으로 생성됩니다 -->
     </div>
   </div>
 
@@ -340,10 +376,13 @@ class IntervalTimer {
     this.intervalId = null;
     this.clockIntervalId = null;
     this.isMuted = false;
+    this.isCountdown = false;
+    this.countdownIntervalId = null;
     
     this.exerciseTimeInput = document.getElementById('exerciseTime');
     this.restTimeInput = document.getElementById('restTime');
     this.totalSetsInput = document.getElementById('totalSets');
+    this.presetSelect = document.getElementById('presetSelect');
     this.startBtn = document.getElementById('startBtn');
     this.pauseBtn = document.getElementById('pauseBtn');
     this.resetBtn = document.getElementById('resetBtn');
@@ -366,6 +405,10 @@ class IntervalTimer {
     this.resetBtn.addEventListener('click', () => this.reset());
     this.muteButton.addEventListener('click', () => this.toggleMute());
     
+    this.presetSelect.addEventListener('change', () => {
+      this.applyPreset();
+    });
+    
     this.totalSetsInput.addEventListener('change', () => {
       this.createSetsIndicator();
     });
@@ -373,11 +416,26 @@ class IntervalTimer {
     // 설정 변경 시 타이머가 실행 중이 아닐 때만 적용
     [this.exerciseTimeInput, this.restTimeInput].forEach(input => {
       input.addEventListener('change', () => {
-        if (!this.isRunning) {
+        if (!this.isRunning && !this.isCountdown) {
           this.updateInitialTime();
         }
       });
     });
+  }
+  
+  applyPreset() {
+    const preset = this.presetSelect.value;
+    if (!preset) return;
+    
+    const [exercise, rest, sets] = preset.split('/').map(Number);
+    this.exerciseTimeInput.value = exercise;
+    this.restTimeInput.value = rest;
+    this.totalSetsInput.value = sets;
+    
+    if (!this.isRunning && !this.isCountdown) {
+      this.updateInitialTime();
+      this.createSetsIndicator();
+    }
   }
   
   createSetsIndicator() {
@@ -408,14 +466,15 @@ class IntervalTimer {
   }
   
   start() {
-    if (!this.isRunning && !this.isPaused) {
-      // 새로 시작
+    if (!this.isRunning && !this.isPaused && !this.isCountdown) {
+      // 새로 시작 - 5초 카운트다운부터 시작
       this.currentSet = 0;
       this.isExercisePhase = true;
-      this.timeLeft = parseInt(this.exerciseTimeInput.value);
-      this.totalTime = parseInt(this.exerciseTimeInput.value);
+      this.startCountdown();
+      return;
     }
     
+    // 일시정지 후 재개
     this.isRunning = true;
     this.isPaused = false;
     this.startBtn.disabled = true;
@@ -427,9 +486,54 @@ class IntervalTimer {
     this.intervalId = setInterval(() => {
       this.tick();
     }, 1000);
+  }
+  
+  startCountdown() {
+    this.isCountdown = true;
+    this.startBtn.disabled = true;
+    this.pauseBtn.disabled = false;
     
-    // 시작 시 효과음 (간단한 beep)
-    this.playBeep();
+    let countdown = 5;
+    this.timeLeft = countdown;
+    this.totalTime = 5;
+    this.timerStatus.textContent = '준비';
+    this.timerStatus.className = 'timer-status';
+    this.updateDisplay();
+    
+    // 카운트다운 비프음 재생 (낮은음에서 높은음으로)
+    this.playCountdownBeep(0);
+    
+    this.countdownIntervalId = setInterval(() => {
+      countdown--;
+      this.timeLeft = countdown;
+      this.updateDisplay();
+      
+      if (countdown > 0) {
+        // 각 카운트마다 비프음 (점점 높은 음)
+        this.playCountdownBeep(5 - countdown);
+      } else {
+        // 카운트다운 완료
+        clearInterval(this.countdownIntervalId);
+        this.isCountdown = false;
+        
+        // 실제 타이머 시작
+        this.currentSet = 0;
+        this.isExercisePhase = true;
+        this.timeLeft = parseInt(this.exerciseTimeInput.value);
+        this.totalTime = parseInt(this.exerciseTimeInput.value);
+        
+        this.isRunning = true;
+        this.createSetsIndicator();
+        this.updateDisplay();
+        
+        this.intervalId = setInterval(() => {
+          this.tick();
+        }, 1000);
+        
+        // 시작 효과음
+        this.playBeep();
+      }
+    }, 1000);
   }
   
   pause() {
@@ -439,12 +543,20 @@ class IntervalTimer {
       this.startBtn.disabled = false;
       this.pauseBtn.disabled = true;
       clearInterval(this.intervalId);
+    } else if (this.isCountdown) {
+      // 카운트다운 중 일시정지
+      this.isCountdown = false;
+      this.isPaused = true;
+      this.startBtn.disabled = false;
+      this.pauseBtn.disabled = true;
+      clearInterval(this.countdownIntervalId);
     }
   }
   
   reset() {
     this.isRunning = false;
     this.isPaused = false;
+    this.isCountdown = false;
     this.currentSet = 0;
     this.isExercisePhase = true;
     this.timeLeft = parseInt(this.exerciseTimeInput.value);
@@ -454,6 +566,7 @@ class IntervalTimer {
     this.pauseBtn.disabled = true;
     
     clearInterval(this.intervalId);
+    clearInterval(this.countdownIntervalId);
     this.createSetsIndicator();
     this.updateDisplay();
   }
@@ -518,7 +631,10 @@ class IntervalTimer {
   updateDisplay() {
     this.timerDisplay.textContent = this.timeLeft.toString().padStart(2, '0');
     
-    if (!this.isRunning && !this.isPaused) {
+    if (this.isCountdown) {
+      this.timerStatus.textContent = '준비';
+      this.timerStatus.className = 'timer-status';
+    } else if (!this.isRunning && !this.isPaused) {
       this.timerStatus.textContent = '준비';
       this.timerStatus.className = 'timer-status';
     } else if (this.isExercisePhase) {
@@ -613,6 +729,39 @@ class IntervalTimer {
     // 완료 시 3번의 beep
     for (let i = 0; i < 3; i++) {
       setTimeout(() => this.playBeep(), i * 200);
+    }
+  }
+  
+  playCountdownBeep(step) {
+    // 뮤트 상태일 때는 소리 재생하지 않음
+    if (this.isMuted) return;
+    
+    // 낮은음(300Hz)에서 높은음(600Hz)으로 점진적 증가
+    const baseFreq = 300;
+    const maxFreq = 600;
+    const frequency = baseFreq + (step / 4) * (maxFreq - baseFreq);
+    
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+      
+      // 짧은 비프음 (0.2초)
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + 0.15);
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (e) {
+      console.log('Audio not supported');
     }
   }
 }

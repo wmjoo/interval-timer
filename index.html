@@ -22,12 +22,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 20px 20px 0;
+    padding: 20px 20px 20px;
     max-width: 400px;
     margin: 0 auto;
     width: 100%;
-    min-height: 100vh;
-    position: relative;
   }
 
   /* 상단 원형 카운트다운 */
@@ -105,7 +103,7 @@
     border-radius: 15px;
     padding: 15px;
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: 0;
     backdrop-filter: blur(10px);
   }
 
@@ -170,14 +168,10 @@
   .controls {
     display: flex;
     gap: 12px;
+    margin-top: 15px;
     margin-bottom: 0;
-    position: absolute;
-    bottom: 15vh;
-    left: 50%;
-    transform: translateX(-50%);
     width: 100%;
-    max-width: 400px;
-    padding: 0 20px;
+    padding: 0;
     justify-content: center;
   }
 
@@ -311,12 +305,12 @@
     }
     
     .container {
-      padding: 15px 15px 0;
+      padding: 15px 15px 20px;
     }
     
     .controls {
-      bottom: 12vh;
-      padding: 0 15px;
+      margin-top: 12px;
+      gap: 10px;
     }
     
     .setting-input {

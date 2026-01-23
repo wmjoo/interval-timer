@@ -355,8 +355,8 @@
         <div class="timer-bg"></div>
         <div class="timer-progress" id="timerProgress">
           <svg viewBox="0 0 100 100">
-            <circle class="timer-progress-bg" cx="50" cy="50" r="45" stroke="rgba(255, 255, 255, 0.2)" stroke-width="15" fill="none"></circle>
-            <circle class="timer-progress-circle" id="progressCircle" cx="50" cy="50" r="45" stroke="#4caf50" stroke-width="15" fill="none" stroke-dasharray="282.743" stroke-dashoffset="282.743"></circle>
+            <circle class="timer-progress-bg" cx="50" cy="50" r="42" stroke="rgba(255, 255, 255, 0.2)" stroke-width="15" fill="none"></circle>
+            <circle class="timer-progress-circle" id="progressCircle" cx="50" cy="50" r="42" stroke="#4caf50" stroke-width="15" fill="none" stroke-dasharray="263.89" stroke-dashoffset="263.89"></circle>
           </svg>
         </div>
         <div class="timer-content">
@@ -424,8 +424,8 @@ class IntervalTimer {
     this.timerStatus = document.getElementById('timerStatus');
     this.timerProgress = document.getElementById('timerProgress');
     this.progressCircle = document.getElementById('progressCircle');
-    // 원의 둘레 계산 (r = 45, viewBox 100x100 기준)
-    this.circumference = 2 * Math.PI * 45; // 약 282.743
+    // 원의 둘레 계산 (r = 42, viewBox 100x100 기준, stroke-width 15 고려)
+    this.circumference = 2 * Math.PI * 42; // 약 263.89
     // 초기 stroke-dasharray 설정
     if (this.progressCircle) {
       this.progressCircle.style.strokeDasharray = this.circumference;

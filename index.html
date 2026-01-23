@@ -33,14 +33,15 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
   }
 
   .circular-timer {
     position: relative;
-    width: 260px;
-    height: 260px;
-    margin-bottom: 20px;
+    width: 75%;
+    max-width: 300px;
+    aspect-ratio: 1;
+    margin-bottom: 25px;
   }
 
   .timer-bg {
@@ -127,7 +128,7 @@
   .setting-input {
     width: 100%;
     max-width: 70px;
-    padding: 8px 5px;
+    padding: 12px 5px;
     border: none;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.9);
@@ -167,23 +168,24 @@
   /* 컨트롤 버튼 */
   .controls {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-top: 15px;
     margin-bottom: 0;
     width: 100%;
     padding: 0;
-    justify-content: center;
+    justify-content: stretch;
   }
 
   .btn {
-    padding: 15px 30px;
+    flex: 1;
+    padding: 15px 10px;
     border: none;
-    border-radius: 25px;
+    border-radius: 15px;
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 120px;
+    min-width: 0;
   }
 
   .btn-primary {
@@ -296,8 +298,8 @@
   }
   @media (max-width: 480px) {
     .circular-timer {
-      width: 220px;
-      height: 220px;
+      width: 75%;
+      max-width: 280px;
     }
     
     .timer-display {
@@ -310,13 +312,19 @@
     
     .controls {
       margin-top: 12px;
-      gap: 10px;
+      gap: 8px;
+    }
+    
+    .btn {
+      padding: 12px 8px;
+      font-size: 1rem;
+      border-radius: 15px;
     }
     
     .setting-input {
       max-width: 60px;
       font-size: 0.85rem;
-      padding: 6px 4px;
+      padding: 10px 4px;
     }
     
     .setting-label {

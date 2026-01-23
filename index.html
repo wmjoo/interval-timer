@@ -58,15 +58,19 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 12px solid transparent;
-    background: conic-gradient(from 0deg, #4caf50 0deg, #4caf50 0deg, rgba(255, 255, 255, 0.2) 0deg, rgba(255, 255, 255, 0.2) 360deg);
-    mask: radial-gradient(circle, transparent 55%, black 55%);
-    -webkit-mask: radial-gradient(circle, transparent 55%, black 55%);
-    transition: background 0.1s ease;
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    pointer-events: none;
+  }
+
+  .timer-progress svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .timer-progress-circle {
+    fill: none;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s ease, stroke 0.3s ease;
   }
 
   .timer-content {
@@ -326,7 +330,12 @@
     <div class="timer-section">
       <div class="circular-timer">
         <div class="timer-bg"></div>
-        <div class="timer-progress" id="timerProgress"></div>
+        <div class="timer-progress" id="timerProgress">
+          <svg viewBox="0 0 100 100">
+            <circle class="timer-progress-bg" cx="50" cy="50" r="45" stroke="rgba(255, 255, 255, 0.2)" stroke-width="10" fill="none"></circle>
+            <circle class="timer-progress-circle" id="progressCircle" cx="50" cy="50" r="45" stroke="#4caf50" stroke-width="10" fill="none" stroke-dasharray="282.743" stroke-dashoffset="282.743"></circle>
+          </svg>
+        </div>
         <div class="timer-content">
           <div class="timer-display" id="timerDisplay">40</div>
           <div class="timer-status" id="timerStatus">준비</div>
@@ -391,6 +400,14 @@ class IntervalTimer {
     this.timerDisplay = document.getElementById('timerDisplay');
     this.timerStatus = document.getElementById('timerStatus');
     this.timerProgress = document.getElementById('timerProgress');
+    this.progressCircle = document.getElementById('progressCircle');
+    // 원의 둘레 계산 (r = 45, viewBox 100x100 기준)
+    this.circumference = 2 * Math.PI * 45; // 약 282.743
+    // 초기 stroke-dasharray 설정
+    if (this.progressCircle) {
+      this.progressCircle.style.strokeDasharray = this.circumference;
+      this.progressCircle.style.strokeDashoffset = this.circumference;
+    }
     this.setsIndicator = document.getElementById('setsIndicator');
     this.currentTime = document.getElementById('currentTime');
     this.muteButton = document.getElementById('muteButton');
@@ -653,12 +670,13 @@ class IntervalTimer {
     // 5초 이하일 때 빨간색, 그 외에는 초록색
     const progressColor = this.timeLeft <= 5 ? '#f44336' : '#4caf50';
     
-    // conic-gradient를 직접 계산하여 설정 (깨짐 현상 방지)
-    // 12시 방향(0deg)에서 시작하여 시계방향으로 채워짐
+    // SVG 원형 프로그래스 바 업데이트 (부드러운 렌더링)
     const progressPercent = Math.min(100, Math.max(0, progress));
-    // from 0deg는 12시 방향, 시계방향으로 진행
-    const backgroundGradient = `conic-gradient(from 0deg, ${progressColor} 0deg, ${progressColor} ${progressPercent * 3.6}deg, rgba(255, 255, 255, 0.2) ${progressPercent * 3.6}deg, rgba(255, 255, 255, 0.2) 360deg)`;
-    this.timerProgress.style.background = backgroundGradient;
+    // stroke-dashoffset을 조정하여 진행률 표시 (12시 방향에서 시계방향)
+    // 전체 둘레에서 진행률만큼 빼면 채워진 부분이 표시됨
+    const offset = this.circumference - (progressPercent / 100) * this.circumference;
+    this.progressCircle.style.strokeDashoffset = offset;
+    this.progressCircle.style.stroke = progressColor;
   }
   
   startClock() {

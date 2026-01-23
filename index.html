@@ -59,7 +59,7 @@
     height: 100%;
     border-radius: 50%;
     border: 12px solid transparent;
-    background: conic-gradient(from -90deg, #4caf50 0%, #4caf50 0%, rgba(255, 255, 255, 0.2) 0%);
+    background: conic-gradient(from 0deg, #4caf50 0deg, #4caf50 0deg, rgba(255, 255, 255, 0.2) 0deg, rgba(255, 255, 255, 0.2) 360deg);
     mask: radial-gradient(circle, transparent 55%, black 55%);
     -webkit-mask: radial-gradient(circle, transparent 55%, black 55%);
     transition: background 0.1s ease;
@@ -654,8 +654,10 @@ class IntervalTimer {
     const progressColor = this.timeLeft <= 5 ? '#f44336' : '#4caf50';
     
     // conic-gradient를 직접 계산하여 설정 (깨짐 현상 방지)
+    // 12시 방향(0deg)에서 시작하여 시계방향으로 채워짐
     const progressPercent = Math.min(100, Math.max(0, progress));
-    const backgroundGradient = `conic-gradient(from -90deg, ${progressColor} 0%, ${progressColor} ${progressPercent}%, rgba(255, 255, 255, 0.2) ${progressPercent}%, rgba(255, 255, 255, 0.2) 100%)`;
+    // from 0deg는 12시 방향, 시계방향으로 진행
+    const backgroundGradient = `conic-gradient(from 0deg, ${progressColor} 0deg, ${progressColor} ${progressPercent * 3.6}deg, rgba(255, 255, 255, 0.2) ${progressPercent * 3.6}deg, rgba(255, 255, 255, 0.2) 360deg)`;
     this.timerProgress.style.background = backgroundGradient;
   }
   

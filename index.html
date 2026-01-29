@@ -543,8 +543,11 @@ class IntervalTimer {
     this.timerStatus.className = 'timer-status';
     this.updateDisplay();
     
-    // Countdown sound: short "ticks" + final longer "GO" beep
-    this.playCountdownBeep(countdown);
+    // Start chime (like a broadcast time signal) + then countdown ticks
+    this.playStartChime();
+    setTimeout(() => {
+      if (this.isCountdown) this.playCountdownBeep(countdown);
+    }, 650);
     
     this.countdownIntervalId = setInterval(() => {
       countdown--;
@@ -763,11 +766,11 @@ class IntervalTimer {
     }
   }
 
-  playTone({ frequency, duration = 0.12, volume = 0.25, type = 'triangle' }) {
+  playTone({ frequency, duration = 0.12, volume = 0.25, type = 'triangle', startDelay = 0 }) {
     const audioContext = this.getAudioContext();
     if (!audioContext) return;
 
-    const t0 = audioContext.currentTime;
+    const t0 = audioContext.currentTime + Math.max(0, startDelay);
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -788,6 +791,16 @@ class IntervalTimer {
 
     oscillator.start(t0);
     oscillator.stop(t0 + duration + 0.02);
+  }
+
+  playStartChime() {
+    if (this.isMuted) return;
+
+    // "시보" 느낌의 3연 비프 (삐-삐-삐-). 마지막을 살짝 길게.
+    const frequency = 1000;
+    this.playTone({ frequency, duration: 0.12, volume: 0.38, type: 'sine', startDelay: 0.0 });
+    this.playTone({ frequency, duration: 0.12, volume: 0.38, type: 'sine', startDelay: 0.22 });
+    this.playTone({ frequency, duration: 0.22, volume: 0.42, type: 'sine', startDelay: 0.44 });
   }
   
   playBeep() {

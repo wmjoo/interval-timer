@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>인터벌 트레이닝 타이머</title>
+<title>Interval Training Timer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   
@@ -28,7 +28,7 @@
     width: 100%;
   }
 
-  /* 상단 원형 카운트다운 */
+  /* Top Circular Countdown */
   .timer-section {
     display: flex;
     flex-direction: column;
@@ -97,7 +97,7 @@
   .exercise { color: #4fc3f7; }
   .rest { color: #ff9800; }
 
-  /* 설정 패널 */
+  /* Settings Panel */
   .settings-panel {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 15px;
@@ -137,7 +137,7 @@
     font-size: 0.95rem;
   }
 
-  /* 프리셋 드롭다운 */
+  /* Preset Dropdown */
   .preset-select {
     width: 100%;
     padding: 10px;
@@ -164,7 +164,7 @@
   }
 
 
-  /* 컨트롤 버튼 */
+  /* Control Buttons */
   .controls {
     display: flex;
     gap: 10px;
@@ -209,7 +209,7 @@
     transform: none;
   }
 
-  /* 상단 세트 인디케이터 */
+  /* Top Sets Indicator */
   .sets-indicator {
     display: flex;
     gap: 12px;
@@ -239,7 +239,7 @@
     transform: scale(1.2);
   }
 
-  /* 플래시 효과 */
+  /* Flash Effect */
   .flash {
     animation: flash 0.5s ease;
   }
@@ -249,7 +249,7 @@
     50% { background: rgba(79, 195, 247, 0.3); }
   }
 
-  /* 현재 시각 표시 */
+  /* Current Time Display */
   .current-time {
     position: absolute;
     top: 20px;
@@ -259,7 +259,7 @@
     font-weight: 400;
   }
 
-  /* 뮤트 버튼 */
+  /* Mute Button */
   .mute-button {
     position: absolute;
     top: 20px;
@@ -289,7 +289,7 @@
     color: #ff5252;
   }
 
-  /* 뮤트 아이콘 SVG 스타일 */
+  /* Mute Icon SVG Style */
   .mute-icon {
     width: 18px;
     height: 18px;
@@ -333,23 +333,23 @@
 </style>
 </head>
 <body>
-  <!-- 현재 시각 표시 -->
+  <!-- Current Time Display -->
   <div class="current-time" id="currentTime">00:00</div>
   
-  <!-- 뮤트 버튼 -->
-  <button class="mute-button" id="muteButton" title="음소거">
+  <!-- Mute Button -->
+  <button class="mute-button" id="muteButton" title="Mute">
     <svg class="mute-icon" id="muteIcon" viewBox="0 0 24 24">
       <path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L7 9H4c-.55 0-1 .45-1 1zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
     </svg>
   </button>
   
   <div class="container">
-    <!-- 상단 세트 인디케이터 -->
+    <!-- Top Sets Indicator -->
     <div class="sets-indicator" id="setsIndicator">
-      <!-- 세트 도트들이 여기에 동적으로 생성됩니다 -->
+      <!-- Set dots will be dynamically generated here -->
     </div>
 
-    <!-- 상단 원형 타이머 -->
+    <!-- Top Circular Timer -->
     <div class="timer-section">
       <div class="circular-timer">
         <div class="timer-bg"></div>
@@ -361,36 +361,36 @@
         </div>
         <div class="timer-content">
           <div class="timer-display" id="timerDisplay">40</div>
-          <div class="timer-status" id="timerStatus">준비</div>
+          <div class="timer-status" id="timerStatus">Ready</div>
         </div>
       </div>
     </div>
 
-    <!-- 설정 패널 -->
+    <!-- Settings Panel -->
     <div class="settings-panel">
       <select id="presetSelect" class="preset-select">
-        <option value="">프리셋 선택 (선택사항)</option>
-        <option value="40/20/3">40/20/3 (운동 40초, 휴식 20초, 3세트)</option>
-        <option value="45/15/3">45/15/3 (운동 45초, 휴식 15초, 3세트)</option>
-        <option value="30/10/5">30/10/5 (운동 30초, 휴식 10초, 5세트)</option>
+        <option value="">Select Preset (Optional)</option>
+        <option value="40/20/3">40/20/3 (Exercise 40s, Rest 20s, 3 sets)</option>
+        <option value="45/15/3">45/15/3 (Exercise 45s, Rest 15s, 3 sets)</option>
+        <option value="30/10/5">30/10/5 (Exercise 30s, Rest 10s, 5 sets)</option>
       </select>
       <div class="settings-grid">
         <div class="setting-item">
-          <div class="setting-label">운동 시간 (초)</div>
+          <div class="setting-label">Exercise Time (sec)</div>
           <input type="number" id="exerciseTime" class="setting-input" value="40" min="5" max="300">
         </div>
         <div class="setting-item">
-          <div class="setting-label">휴식 시간 (초)</div>
+          <div class="setting-label">Rest Time (sec)</div>
           <input type="number" id="restTime" class="setting-input" value="20" min="5" max="300">
         </div>
         <div class="setting-item">
-          <div class="setting-label">총 세트 수</div>
+          <div class="setting-label">Total Sets</div>
           <input type="number" id="totalSets" class="setting-input" value="3" min="1" max="20">
         </div>
       </div>
     </div>
 
-    <!-- 컨트롤 버튼 -->
+    <!-- Control Buttons -->
     <div class="controls">
       <button id="startBtn" class="btn btn-primary">START</button>
       <button id="pauseBtn" class="btn btn-secondary" disabled>PAUSE</button>
@@ -412,6 +412,7 @@ class IntervalTimer {
     this.isMuted = false;
     this.isCountdown = false;
     this.countdownIntervalId = null;
+    this.audioContext = null;
     
     this.exerciseTimeInput = document.getElementById('exerciseTime');
     this.restTimeInput = document.getElementById('restTime');
@@ -424,9 +425,9 @@ class IntervalTimer {
     this.timerStatus = document.getElementById('timerStatus');
     this.timerProgress = document.getElementById('timerProgress');
     this.progressCircle = document.getElementById('progressCircle');
-    // 원의 둘레 계산 (r = 42, viewBox 100x100 기준, stroke-width 15 고려)
-    this.circumference = 2 * Math.PI * 42; // 약 263.89
-    // 초기 stroke-dasharray 설정
+    // Calculate circle circumference (r = 42, viewBox 100x100, stroke-width 15)
+    this.circumference = 2 * Math.PI * 42; // approximately 263.89
+    // Initial stroke-dasharray setting
     if (this.progressCircle) {
       this.progressCircle.style.strokeDasharray = this.circumference;
       this.progressCircle.style.strokeDashoffset = this.circumference;
@@ -455,7 +456,7 @@ class IntervalTimer {
       this.createSetsIndicator();
     });
     
-    // 설정 변경 시 타이머가 실행 중이 아닐 때만 적용
+    // Apply settings only when timer is not running
     [this.exerciseTimeInput, this.restTimeInput].forEach(input => {
       input.addEventListener('change', () => {
         if (!this.isRunning && !this.isCountdown) {
@@ -509,14 +510,14 @@ class IntervalTimer {
   
   start() {
     if (!this.isRunning && !this.isPaused && !this.isCountdown) {
-      // 새로 시작 - 5초 카운트다운부터 시작
+      // New start - begin with 5-second countdown
       this.currentSet = 0;
       this.isExercisePhase = true;
       this.startCountdown();
       return;
     }
     
-    // 일시정지 후 재개
+    // Resume after pause
     this.isRunning = true;
     this.isPaused = false;
     this.startBtn.disabled = true;
@@ -538,12 +539,12 @@ class IntervalTimer {
     let countdown = 5;
     this.timeLeft = countdown;
     this.totalTime = 5;
-    this.timerStatus.textContent = '준비';
+    this.timerStatus.textContent = 'Ready';
     this.timerStatus.className = 'timer-status';
     this.updateDisplay();
     
-    // 카운트다운 비프음 재생 (낮은음에서 높은음으로)
-    this.playCountdownBeep(0);
+    // Countdown sound: short "ticks" + final longer "GO" beep
+    this.playCountdownBeep(countdown);
     
     this.countdownIntervalId = setInterval(() => {
       countdown--;
@@ -551,14 +552,14 @@ class IntervalTimer {
       this.updateDisplay();
       
       if (countdown > 0) {
-        // 각 카운트마다 비프음 (점점 높은 음)
-        this.playCountdownBeep(5 - countdown);
+        this.playCountdownBeep(countdown);
       } else {
-        // 카운트다운 완료
+        // Countdown complete
         clearInterval(this.countdownIntervalId);
         this.isCountdown = false;
+        this.playCountdownBeep(0, true);
         
-        // 실제 타이머 시작
+        // Start actual timer
         this.currentSet = 0;
         this.isExercisePhase = true;
         this.timeLeft = parseInt(this.exerciseTimeInput.value);
@@ -571,9 +572,6 @@ class IntervalTimer {
         this.intervalId = setInterval(() => {
           this.tick();
         }, 1000);
-        
-        // 시작 효과음
-        this.playBeep();
       }
     }, 1000);
   }
@@ -586,7 +584,7 @@ class IntervalTimer {
       this.pauseBtn.disabled = true;
       clearInterval(this.intervalId);
     } else if (this.isCountdown) {
-      // 카운트다운 중 일시정지
+      // Pause during countdown
       this.isCountdown = false;
       this.isPaused = true;
       this.startBtn.disabled = false;
@@ -626,20 +624,26 @@ class IntervalTimer {
     this.playBeep();
     this.flashScreen();
     
+    const totalSets = parseInt(this.totalSetsInput.value);
     if (this.isExercisePhase) {
-      // 운동 -> 휴식
+      // If this was the last set, finish immediately (no rest after final work)
+      if (this.currentSet >= totalSets - 1) {
+        this.complete(true);
+        return;
+      }
+
+      // Exercise -> Rest
       this.isExercisePhase = false;
       this.timeLeft = parseInt(this.restTimeInput.value);
       this.totalTime = parseInt(this.restTimeInput.value);
     } else {
-      // 휴식 -> 다음 세트 운동
+      // Rest -> Next set exercise
       this.currentSet++;
       this.isExercisePhase = true;
       
-      const totalSets = parseInt(this.totalSetsInput.value);
       if (this.currentSet >= totalSets) {
-        // 모든 세트 완료
-        this.complete();
+        // All sets completed
+        this.complete(true);
         return;
       }
       
@@ -651,18 +655,18 @@ class IntervalTimer {
     this.updateDisplay();
   }
   
-  complete() {
+  complete(alreadyFlashed = false) {
     this.isRunning = false;
     this.startBtn.disabled = false;
     this.pauseBtn.disabled = true;
     clearInterval(this.intervalId);
     
-    this.timerStatus.textContent = '완료!';
+    this.timerStatus.textContent = 'Complete!';
     this.timerDisplay.textContent = '00';
-    this.flashScreen();
+    if (!alreadyFlashed) this.flashScreen();
     this.playCompletionSound();
     
-    // 모든 세트를 완료로 표시
+    // Mark all sets as completed
     const dots = this.setsIndicator.querySelectorAll('.set-dot');
     dots.forEach(dot => {
       dot.classList.remove('current');
@@ -674,29 +678,29 @@ class IntervalTimer {
     this.timerDisplay.textContent = this.timeLeft.toString().padStart(2, '0');
     
     if (this.isCountdown) {
-      this.timerStatus.textContent = '준비';
+      this.timerStatus.textContent = 'Ready';
       this.timerStatus.className = 'timer-status';
     } else if (!this.isRunning && !this.isPaused) {
-      this.timerStatus.textContent = '준비';
+      this.timerStatus.textContent = 'Ready';
       this.timerStatus.className = 'timer-status';
     } else if (this.isExercisePhase) {
-      this.timerStatus.textContent = '운동';
+      this.timerStatus.textContent = 'Exercise';
       this.timerStatus.className = 'timer-status exercise';
     } else {
-      this.timerStatus.textContent = '휴식';
+      this.timerStatus.textContent = 'Rest';
       this.timerStatus.className = 'timer-status rest';
     }
     
-    // 진행률 업데이트 (0에서 시작해서 100%로)
+    // Update progress (from 0% to 100%)
     const progress = ((this.totalTime - this.timeLeft) / this.totalTime) * 100;
     
-    // 5초 이하일 때 빨간색, 그 외에는 초록색
+    // Red when <= 5 seconds, otherwise green
     const progressColor = this.timeLeft <= 5 ? '#f44336' : '#4caf50';
     
-    // SVG 원형 프로그래스 바 업데이트 (부드러운 렌더링)
+    // Update SVG circular progress bar (smooth rendering)
     const progressPercent = Math.min(100, Math.max(0, progress));
-    // stroke-dashoffset을 조정하여 진행률 표시 (12시 방향에서 시계방향)
-    // 전체 둘레에서 진행률만큼 빼면 채워진 부분이 표시됨
+    // Adjust stroke-dashoffset to show progress (clockwise from 12 o'clock)
+    // Subtract progress from full circumference to reveal the filled portion
     const offset = this.circumference - (progressPercent / 100) * this.circumference;
     this.progressCircle.style.strokeDashoffset = offset;
     this.progressCircle.style.stroke = progressColor;
@@ -721,15 +725,15 @@ class IntervalTimer {
     const muteIcon = document.getElementById('muteIcon');
     
     if (this.isMuted) {
-      // 음소거 아이콘 (X 표시)
+      // Muted icon (with X)
       muteIcon.innerHTML = '<path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L7 9H4c-.55 0-1 .45-1 1z"/><path d="m19.07 4.93-1.41 1.41L16.25 7.75A4.978 4.978 0 0 1 17 10c0 1.77-1.02 3.29-2.5 4.03v2.21l2.45 2.45c.39-.23.76-.5 1.1-.8.85-.74 1.36-1.82 1.36-2.96V10.5c0-.28-.22-.5-.5-.5s-.5.22-.5.5v4.43c0 .45-.17.87-.47 1.18l1.24 1.24 1.41-1.41L19.07 4.93z"/>';
       this.muteButton.classList.add('muted');
-      this.muteButton.title = '음소거 해제';
+      this.muteButton.title = 'Unmute';
     } else {
-      // 스피커 아이콘 (원래 상태)
+      // Speaker icon (normal)
       muteIcon.innerHTML = '<path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L7 9H4c-.55 0-1 .45-1 1zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
       this.muteButton.classList.remove('muted');
-      this.muteButton.title = '음소거';
+      this.muteButton.title = 'Mute';
     }
   }
   
@@ -739,81 +743,95 @@ class IntervalTimer {
       document.body.classList.remove('flash');
     }, 500);
   }
+
+  getAudioContext() {
+    if (this.isMuted) return null;
+
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      if (this.audioContext.state === 'suspended') {
+        // Resume best-effort (may require user gesture depending on browser)
+        this.audioContext.resume().catch(() => {});
+      }
+      return this.audioContext;
+    }
+
+    try {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      return this.audioContext;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  playTone({ frequency, duration = 0.12, volume = 0.25, type = 'triangle' }) {
+    const audioContext = this.getAudioContext();
+    if (!audioContext) return;
+
+    const t0 = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, t0);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    const attack = Math.min(0.02, duration * 0.2);
+    const release = Math.min(0.06, duration * 0.3);
+    const sustain = Math.max(0, duration - attack - release);
+
+    gainNode.gain.setValueAtTime(0, t0);
+    gainNode.gain.linearRampToValueAtTime(volume, t0 + attack);
+    gainNode.gain.setValueAtTime(volume, t0 + attack + sustain);
+    gainNode.gain.linearRampToValueAtTime(0, t0 + duration);
+
+    oscillator.start(t0);
+    oscillator.stop(t0 + duration + 0.02);
+  }
   
   playBeep() {
-    // 뮤트 상태일 때는 소리 재생하지 않음
     if (this.isMuted) return;
-    
-    // Web Audio API를 사용한 부드러운 장음 beep
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = 440;  // A4 음표 (더 부드러운 주파수)
-      oscillator.type = 'sine';  // 사인파로 변경 (더 부드러운 음성)
-      
-      // 부드러운 페이드 인/아웃
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);  // 페이드 인
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + 1.0);  // 유지
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.3);  // 페이드 아웃
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 1.3);  // 더 긴 장음 (1.3초)
-    } catch (e) {
-      console.log('Audio not supported');
-    }
+    // A slightly longer, smooth beep for phase changes
+    this.playTone({ frequency: 440, duration: 0.9, volume: 0.35, type: 'sine' });
   }
   
   playCompletionSound() {
-    // 뮤트 상태일 때는 소리 재생하지 않음
+    // Don't play audio when muted
     if (this.isMuted) return;
     
-    // 완료 시 3번의 beep
+    // 3 beeps on completion
     for (let i = 0; i < 3; i++) {
       setTimeout(() => this.playBeep(), i * 200);
     }
   }
   
-  playCountdownBeep(step) {
-    // 뮤트 상태일 때는 소리 재생하지 않음
+  playCountdownBeep(secondsLeft, isFinal = false) {
     if (this.isMuted) return;
-    
-    // 낮은음(300Hz)에서 높은음(600Hz)으로 점진적 증가
-    const baseFreq = 300;
-    const maxFreq = 600;
-    const frequency = baseFreq + (step / 4) * (maxFreq - baseFreq);
-    
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = frequency;
-      oscillator.type = 'sine';
-      
-      // 짧은 비프음 (0.2초)
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + 0.15);
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.2);
-    } catch (e) {
-      console.log('Audio not supported');
+
+    if (isFinal) {
+      // "GO" beep (longer + higher)
+      this.playTone({ frequency: 1046.5, duration: 0.35, volume: 0.42, type: 'sine' });
+      return;
     }
+
+    // Short ticks that rise as the countdown approaches zero
+    const freqBySecondsLeft = {
+      5: 523.25,  // C5
+      4: 587.33,  // D5
+      3: 659.25,  // E5
+      2: 783.99,  // G5
+      1: 987.77,  // B5
+    };
+
+    const frequency = freqBySecondsLeft[secondsLeft];
+    if (!frequency) return;
+
+    this.playTone({ frequency, duration: 0.12, volume: 0.28, type: 'triangle' });
   }
 }
 
-// 타이머 초기화
+// Initialize timer
 document.addEventListener('DOMContentLoaded', () => {
   new IntervalTimer();
 });

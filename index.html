@@ -139,14 +139,16 @@
   /* Preset Dropdown */
   .preset-select {
     width: 100%;
-    padding: 10px;
+    /* Matches .track-picker-btn so both dropdowns are the same height. */
+    padding: 7px 10px;
     border: none;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.9);
     color: #1a237e;
     font-weight: 600;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    line-height: 1.25;
     margin-bottom: 12px;
     cursor: pointer;
     appearance: none;
@@ -521,9 +523,97 @@
     transform: none;
   }
 
-  .player-playlist {
-    margin-bottom: 0;
-    font-size: 0.8rem;
+  /* Two-column playlist picker: playlist name | track title.
+     A native <select> cannot lay its options out in columns. */
+  .track-picker {
+    position: relative;
+    width: 100%;
+  }
+
+  .track-picker-btn,
+  .track-option {
+    display: grid;
+    grid-template-columns: 62px 1fr;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .track-picker-btn {
+    padding: 7px 28px 7px 10px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1a237e;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231a237e' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  .track-picker-btn:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+
+  .track-col-group {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #5c6bc0;
+    text-align: center;
+    padding: 2px 0;
+    border-radius: 4px;
+    background: rgba(92, 107, 192, 0.12);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .track-col-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .track-picker-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 4px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .track-option {
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: #1a237e;
+    cursor: pointer;
+  }
+
+  .track-option + .track-option.is-group-start {
+    margin-top: 3px;
+    border-top: 1px solid rgba(26, 35, 126, 0.1);
+    padding-top: 8px;
+  }
+
+  .track-option:hover,
+  .track-option.is-active {
+    background: rgba(79, 195, 247, 0.22);
+  }
+
+  .track-option.is-selected {
+    background: rgba(26, 35, 126, 0.1);
   }
 
   @media (max-width: 480px) {
@@ -666,7 +756,14 @@
           </button>
         </div>
       </div>
-      <select id="playlistSelect" class="preset-select player-playlist" aria-label="Playlist"></select>
+      <div class="track-picker" id="trackPicker">
+        <button type="button" class="track-picker-btn" id="trackPickerBtn"
+                aria-haspopup="listbox" aria-expanded="false" aria-label="Playlist">
+          <span class="track-col-group" id="trackPickerGroup"></span>
+          <span class="track-col-title" id="trackPickerTitle"></span>
+        </button>
+        <div class="track-picker-menu" id="trackPickerMenu" role="listbox" hidden></div>
+      </div>
     </div>
   </div>
 
@@ -676,73 +773,73 @@
 const ARCHIVE_BASE = 'https://archive.org/download/freepd/';
 
 const BGM_TRACKS = [
-  { id: 'dnb-energy', title: 'Drum n Bass E Energy', group: 'work', path: 'Page2/Drum n Bass E Energy.mp3', local: true },
-  { id: 'drum-n-bass-b-drive', title: 'Drum n Bass B Drive', group: 'work', path: 'Page2/Drum n Bass B Drive.mp3' },
-  { id: 'drum-n-bass-k-megatrack', title: 'Drum n Bass K Megatrack', group: 'work', path: 'Page2/Drum n Bass K Megatrack.mp3' },
-  { id: 'drum-n-bass-j-hit-me', title: 'Drum n Bass J Hit Me', group: 'work', path: 'Page2/Drum n Bass J Hit Me.mp3' },
-  { id: 'drum-n-bass-i-almost-awesome', title: 'Drum n Bass I Almost Awesome', group: 'work', path: 'Page2/Drum n Bass I Almost Awesome.mp3' },
-  { id: 'drum-n-bass-c-super-shaker', title: 'Drum n Bass C Super Shaker', group: 'work', path: 'Page2/Drum n Bass C Super Shaker.mp3' },
-  { id: 'drum-n-bass-h-stutter', title: 'Drum n Bass H Stutter', group: 'work', path: 'Page2/Drum n Bass H Stutter.mp3' },
-  { id: 'electro-dnb', title: 'Electro DnB A', group: 'work', path: 'Page2/Electro DnB A.mp3', local: true },
-  { id: 'electro-dnb-b-chaos', title: 'Electro DnB B Chaos', group: 'work', path: 'Page2/Electro DnB B Chaos.mp3' },
-  { id: 'electro-dnb-quirk', title: 'Electro DnB Quirk', group: 'work', path: 'Page2/Electro DnB Quirk.mp3' },
-  { id: 'jungle-frentic', title: 'Jungle Frentic', group: 'work', path: 'Page2/Jungle Frentic.mp3' },
-  { id: 'jungle-party', title: 'Jungle Party', group: 'work', path: 'Page2/Jungle Party.mp3' },
-  { id: 'jungle-edge', title: 'Jungle Edge', group: 'work', path: 'Page2/Jungle Edge.mp3' },
-  { id: 'jungleshine', title: 'JungleShine', group: 'work', path: 'Page2/JungleShine.mp3' },
-  { id: 'trance-metal-rush', title: 'Trance A Metal Rush', group: 'work', path: 'Page2/Trance A Metal Rush.mp3', local: true },
-  { id: 'trance-e-frantic-bomb', title: 'Trance E Frantic Bomb', group: 'work', path: 'Page2/Trance E Frantic Bomb.mp3' },
-  { id: 'trance-h-jumper', title: 'Trance H Jumper', group: 'work', path: 'Page2/Trance H Jumper.mp3' },
-  { id: 'trance-c-bright-blip', title: 'Trance C Bright Blip', group: 'work', path: 'Page2/Trance C Bright Blip.mp3' },
-  { id: 'trance-f-trade-pep', title: 'Trance F Trade Pep', group: 'work', path: 'Page2/Trance F Trade Pep.mp3' },
-  { id: 'tech-thumper', title: 'Tech E Thumper', group: 'work', path: 'Page2/Tech E Thumper.mp3', local: true },
-  { id: 'tech-b-jab', title: 'Tech B Jab', group: 'work', path: 'Page2/Tech B Jab.mp3' },
-  { id: 'tech-f-grind', title: 'Tech F Grind', group: 'work', path: 'Page2/Tech F Grind.mp3' },
-  { id: 'tech-k-youturn', title: 'Tech K YouTurn', group: 'work', path: 'Page2/Tech K YouTurn.mp3' },
-  { id: 'raveminimal', title: 'Raveminimal', group: 'work', path: 'Page2/Raveminimal.mp3' },
-  { id: 'relentless', title: 'Relentless', group: 'work', path: 'Page2/Relentless.mp3', local: true },
-  { id: 'twister', title: 'Twister', group: 'work', path: 'Page2/Twister.mp3', local: true },
-  { id: 'squanch', title: 'Squanch', group: 'work', path: 'Page2/Squanch.mp3' },
-  { id: 'electrofreak', title: 'ElectroFreak', group: 'work', path: 'Page2/ElectroFreak.mp3' },
-  { id: 'octave-jumper', title: 'Octave Jumper', group: 'work', path: 'Page2/Octave Jumper.mp3' },
-  { id: 'super-snare', title: 'Super Snare', group: 'work', path: 'Page2/Super Snare.mp3' },
-  { id: 'house-a-square', title: 'House A Square', group: 'work', path: 'Page2/House A Square.mp3' },
-  { id: 'house-d-reasonably-cool', title: 'House D Reasonably Cool', group: 'work', path: 'Page2/House D Reasonably Cool.mp3' },
-  { id: 'house-g-room-to-breathe', title: 'House G Room to Breathe', group: 'work', path: 'Page2/House G Room to Breathe.mp3' },
-  { id: 'house-i-aquabeat', title: 'House I Aquabeat', group: 'work', path: 'Page2/House I Aquabeat.mp3' },
-  { id: 'house-grindstone', title: 'House J Grindstone', group: 'work', path: 'Page2/House J Grindstone.mp3', local: true },
-  { id: 'house-e-watery-groove', title: 'House E Watery Groove', group: 'work', path: 'Page2/House E Watery Groove.mp3' },
-  { id: 'funkeriffic', title: 'Funkeriffic', group: 'work', path: 'misc/Funkeriffic.mp3', local: true },
-  { id: 'energizing', title: 'Energizing', group: 'work', path: 'misc/Energizing.mp3' },
-  { id: 'rush', title: 'Rush', group: 'work', path: 'comedy/Rush.mp3' },
-  { id: 'urban-funk-a', title: 'Urban Funk A', group: 'work', path: 'Page2/Urban Funk A.mp3' },
-  { id: 'urban-funk-b', title: 'Urban Funk B', group: 'work', path: 'Page2/Urban Funk B.mp3' },
-  { id: 'urban-cool-trip', title: 'Urban Cool Trip', group: 'work', path: 'Page2/Urban Cool Trip.mp3' },
-  { id: 'urban-mixer', title: 'Urban Mixer', group: 'work', path: 'Page2/Urban Mixer.mp3' },
-  { id: 'hip-hop-b-thick-beat', title: 'Hip Hop B Thick Beat', group: 'work', path: 'Page2/Hip Hop B Thick Beat.mp3' },
-  { id: 'hip-hop-driver', title: 'Hip Hop Driver', group: 'work', path: 'Page2/Hip Hop Driver.mp3' },
-  { id: 'hip-hop-epics', title: 'Hip Hop Epics', group: 'work', path: 'Page2/Hip Hop Epics.mp3' },
-  { id: 'rap-funk', title: 'Rap Funk', group: 'work', path: 'Page2/Rap Funk.mp3' },
-  { id: 'rap-deep-groove', title: 'Rap Deep Groove', group: 'work', path: 'Page2/Rap Deep Groove.mp3' },
-  { id: 'rap-lop-a-dop', title: 'Rap Lop-a-dop', group: 'work', path: 'Page2/Rap Lop-a-dop.mp3' },
-  { id: 'electronic-a-groove-out', title: 'Electronic A Groove Out', group: 'work', path: 'Page2/Electronic A Groove Out.mp3' },
-  { id: 'electronic-g-percussive-party', title: 'Electronic G Percussive Party', group: 'work', path: 'Page2/Electronic G Percussive Party.mp3' },
-  { id: 'electronic-i-crazy-fun', title: 'Electronic I Crazy Fun', group: 'work', path: 'Page2/Electronic I Crazy Fun.mp3' },
-  { id: 'electronic-l-discoed', title: 'Electronic L Discoed', group: 'work', path: 'Page2/Electronic L Discoed.mp3' },
-  { id: 'electronic-q-80s-incarnate', title: 'Electronic Q 80s Incarnate', group: 'work', path: 'Page2/Electronic Q 80s Incarnate.mp3' },
-  { id: 'messy-beat', title: 'Messy Beat', group: 'work', path: 'Page2/Messy Beat.mp3' },
-  { id: 'action-strike', title: 'Action Strike', group: 'work', path: 'scoring/Action Strike.mp3' },
-  { id: 'hit-n-smash', title: 'Hit n Smash', group: 'work', path: 'epic/Hit n Smash.mp3' },
-  { id: 'video-game-blockbuster', title: 'Video Game Blockbuster', group: 'work', path: 'epic/Video Game Blockbuster.mp3' },
-  { id: 'epic-boss-battle', title: 'Epic Boss Battle', group: 'work', path: 'epic/Epic Boss Battle.mp3' },
-  { id: 'chill-beat', title: 'Chill Beat', group: 'rest', path: 'Page2/Chill Beat.mp3', local: true },
-  { id: 'chill-a', title: 'Chill A', group: 'rest', path: 'Page2/Chill A.mp3' },
-  { id: 'electro-chill', title: 'Electro Chill A', group: 'rest', path: 'Page2/Electro Chill A.mp3', local: true },
-  { id: 'electro-chill-c', title: 'Electro Chill C', group: 'rest', path: 'Page2/Electro Chill C.mp3' },
-  { id: 'soft-urban', title: 'Soft Urban A', group: 'rest', path: 'Page2/Soft Urban A.mp3', local: true },
-  { id: 'chillectro', title: 'Chillectro', group: 'rest', path: 'Page2/Chillectro.mp3' },
-  { id: 'study-and-relax', title: 'Study and Relax', group: 'rest', path: 'featured/Study and Relax.mp3' },
-  { id: 'chill-urban', title: 'Chill Urban', group: 'rest', path: 'Page2/Chill Urban.mp3', local: true },
+  { id: 'dnb-energy', title: 'Drum n Bass E Energy', group: 'work', list: 'SPRINT', path: 'Page2/Drum n Bass E Energy.mp3', local: true },
+  { id: 'drum-n-bass-b-drive', title: 'Drum n Bass B Drive', group: 'work', list: 'SPRINT', path: 'Page2/Drum n Bass B Drive.mp3' },
+  { id: 'drum-n-bass-k-megatrack', title: 'Drum n Bass K Megatrack', group: 'work', list: 'SPRINT', path: 'Page2/Drum n Bass K Megatrack.mp3' },
+  { id: 'drum-n-bass-j-hit-me', title: 'Drum n Bass J Hit Me', group: 'work', list: 'SPRINT', path: 'Page2/Drum n Bass J Hit Me.mp3' },
+  { id: 'drum-n-bass-i-almost-awesome', title: 'Drum n Bass I Almost Awesome', group: 'work', list: 'SPRINT', path: 'Page2/Drum n Bass I Almost Awesome.mp3' },
+  { id: 'drum-n-bass-c-super-shaker', title: 'Drum n Bass C Super Shaker', group: 'work', list: 'SPRINT', path: 'Page2/Drum n Bass C Super Shaker.mp3' },
+  { id: 'drum-n-bass-h-stutter', title: 'Drum n Bass H Stutter', group: 'work', list: 'SPRINT', path: 'Page2/Drum n Bass H Stutter.mp3' },
+  { id: 'electro-dnb', title: 'Electro DnB A', group: 'work', list: 'SPRINT', path: 'Page2/Electro DnB A.mp3', local: true },
+  { id: 'electro-dnb-b-chaos', title: 'Electro DnB B Chaos', group: 'work', list: 'SPRINT', path: 'Page2/Electro DnB B Chaos.mp3' },
+  { id: 'electro-dnb-quirk', title: 'Electro DnB Quirk', group: 'work', list: 'SPRINT', path: 'Page2/Electro DnB Quirk.mp3' },
+  { id: 'jungle-frentic', title: 'Jungle Frentic', group: 'work', list: 'SPRINT', path: 'Page2/Jungle Frentic.mp3' },
+  { id: 'jungle-party', title: 'Jungle Party', group: 'work', list: 'SPRINT', path: 'Page2/Jungle Party.mp3' },
+  { id: 'jungle-edge', title: 'Jungle Edge', group: 'work', list: 'SPRINT', path: 'Page2/Jungle Edge.mp3' },
+  { id: 'jungleshine', title: 'JungleShine', group: 'work', list: 'SPRINT', path: 'Page2/JungleShine.mp3' },
+  { id: 'trance-metal-rush', title: 'Trance A Metal Rush', group: 'work', list: 'RAVE', path: 'Page2/Trance A Metal Rush.mp3', local: true },
+  { id: 'trance-e-frantic-bomb', title: 'Trance E Frantic Bomb', group: 'work', list: 'RAVE', path: 'Page2/Trance E Frantic Bomb.mp3' },
+  { id: 'trance-h-jumper', title: 'Trance H Jumper', group: 'work', list: 'RAVE', path: 'Page2/Trance H Jumper.mp3' },
+  { id: 'trance-c-bright-blip', title: 'Trance C Bright Blip', group: 'work', list: 'RAVE', path: 'Page2/Trance C Bright Blip.mp3' },
+  { id: 'trance-f-trade-pep', title: 'Trance F Trade Pep', group: 'work', list: 'RAVE', path: 'Page2/Trance F Trade Pep.mp3' },
+  { id: 'tech-thumper', title: 'Tech E Thumper', group: 'work', list: 'RAVE', path: 'Page2/Tech E Thumper.mp3', local: true },
+  { id: 'tech-b-jab', title: 'Tech B Jab', group: 'work', list: 'RAVE', path: 'Page2/Tech B Jab.mp3' },
+  { id: 'tech-f-grind', title: 'Tech F Grind', group: 'work', list: 'RAVE', path: 'Page2/Tech F Grind.mp3' },
+  { id: 'tech-k-youturn', title: 'Tech K YouTurn', group: 'work', list: 'RAVE', path: 'Page2/Tech K YouTurn.mp3' },
+  { id: 'raveminimal', title: 'Raveminimal', group: 'work', list: 'RAVE', path: 'Page2/Raveminimal.mp3' },
+  { id: 'relentless', title: 'Relentless', group: 'work', list: 'RAVE', path: 'Page2/Relentless.mp3', local: true },
+  { id: 'twister', title: 'Twister', group: 'work', list: 'RAVE', path: 'Page2/Twister.mp3', local: true },
+  { id: 'squanch', title: 'Squanch', group: 'work', list: 'RAVE', path: 'Page2/Squanch.mp3' },
+  { id: 'electrofreak', title: 'ElectroFreak', group: 'work', list: 'RAVE', path: 'Page2/ElectroFreak.mp3' },
+  { id: 'octave-jumper', title: 'Octave Jumper', group: 'work', list: 'RAVE', path: 'Page2/Octave Jumper.mp3' },
+  { id: 'super-snare', title: 'Super Snare', group: 'work', list: 'RAVE', path: 'Page2/Super Snare.mp3' },
+  { id: 'house-a-square', title: 'House A Square', group: 'work', list: 'GROOVE', path: 'Page2/House A Square.mp3' },
+  { id: 'house-d-reasonably-cool', title: 'House D Reasonably Cool', group: 'work', list: 'GROOVE', path: 'Page2/House D Reasonably Cool.mp3' },
+  { id: 'house-g-room-to-breathe', title: 'House G Room to Breathe', group: 'work', list: 'GROOVE', path: 'Page2/House G Room to Breathe.mp3' },
+  { id: 'house-i-aquabeat', title: 'House I Aquabeat', group: 'work', list: 'GROOVE', path: 'Page2/House I Aquabeat.mp3' },
+  { id: 'house-grindstone', title: 'House J Grindstone', group: 'work', list: 'GROOVE', path: 'Page2/House J Grindstone.mp3', local: true },
+  { id: 'house-e-watery-groove', title: 'House E Watery Groove', group: 'work', list: 'GROOVE', path: 'Page2/House E Watery Groove.mp3' },
+  { id: 'funkeriffic', title: 'Funkeriffic', group: 'work', list: 'FUNK', path: 'misc/Funkeriffic.mp3', local: true },
+  { id: 'energizing', title: 'Energizing', group: 'work', list: 'FUNK', path: 'misc/Energizing.mp3' },
+  { id: 'rush', title: 'Rush', group: 'work', list: 'FUNK', path: 'comedy/Rush.mp3' },
+  { id: 'urban-funk-a', title: 'Urban Funk A', group: 'work', list: 'FUNK', path: 'Page2/Urban Funk A.mp3' },
+  { id: 'urban-funk-b', title: 'Urban Funk B', group: 'work', list: 'FUNK', path: 'Page2/Urban Funk B.mp3' },
+  { id: 'urban-cool-trip', title: 'Urban Cool Trip', group: 'work', list: 'FUNK', path: 'Page2/Urban Cool Trip.mp3' },
+  { id: 'urban-mixer', title: 'Urban Mixer', group: 'work', list: 'FUNK', path: 'Page2/Urban Mixer.mp3' },
+  { id: 'hip-hop-b-thick-beat', title: 'Hip Hop B Thick Beat', group: 'work', list: 'HIP HOP', path: 'Page2/Hip Hop B Thick Beat.mp3' },
+  { id: 'hip-hop-driver', title: 'Hip Hop Driver', group: 'work', list: 'HIP HOP', path: 'Page2/Hip Hop Driver.mp3' },
+  { id: 'hip-hop-epics', title: 'Hip Hop Epics', group: 'work', list: 'HIP HOP', path: 'Page2/Hip Hop Epics.mp3' },
+  { id: 'rap-funk', title: 'Rap Funk', group: 'work', list: 'HIP HOP', path: 'Page2/Rap Funk.mp3' },
+  { id: 'rap-deep-groove', title: 'Rap Deep Groove', group: 'work', list: 'HIP HOP', path: 'Page2/Rap Deep Groove.mp3' },
+  { id: 'rap-lop-a-dop', title: 'Rap Lop-a-dop', group: 'work', list: 'HIP HOP', path: 'Page2/Rap Lop-a-dop.mp3' },
+  { id: 'electronic-a-groove-out', title: 'Electronic A Groove Out', group: 'work', list: 'RETRO', path: 'Page2/Electronic A Groove Out.mp3' },
+  { id: 'electronic-g-percussive-party', title: 'Electronic G Percussive Party', group: 'work', list: 'RETRO', path: 'Page2/Electronic G Percussive Party.mp3' },
+  { id: 'electronic-i-crazy-fun', title: 'Electronic I Crazy Fun', group: 'work', list: 'RETRO', path: 'Page2/Electronic I Crazy Fun.mp3' },
+  { id: 'electronic-l-discoed', title: 'Electronic L Discoed', group: 'work', list: 'RETRO', path: 'Page2/Electronic L Discoed.mp3' },
+  { id: 'electronic-q-80s-incarnate', title: 'Electronic Q 80s Incarnate', group: 'work', list: 'RETRO', path: 'Page2/Electronic Q 80s Incarnate.mp3' },
+  { id: 'messy-beat', title: 'Messy Beat', group: 'work', list: 'RETRO', path: 'Page2/Messy Beat.mp3' },
+  { id: 'action-strike', title: 'Action Strike', group: 'work', list: 'BOSS', path: 'scoring/Action Strike.mp3' },
+  { id: 'hit-n-smash', title: 'Hit n Smash', group: 'work', list: 'BOSS', path: 'epic/Hit n Smash.mp3' },
+  { id: 'video-game-blockbuster', title: 'Video Game Blockbuster', group: 'work', list: 'BOSS', path: 'epic/Video Game Blockbuster.mp3' },
+  { id: 'epic-boss-battle', title: 'Epic Boss Battle', group: 'work', list: 'BOSS', path: 'epic/Epic Boss Battle.mp3' },
+  { id: 'chill-beat', title: 'Chill Beat', group: 'rest', list: 'CHILL', path: 'Page2/Chill Beat.mp3', local: true },
+  { id: 'chill-a', title: 'Chill A', group: 'rest', list: 'CHILL', path: 'Page2/Chill A.mp3' },
+  { id: 'electro-chill', title: 'Electro Chill A', group: 'rest', list: 'CHILL', path: 'Page2/Electro Chill A.mp3', local: true },
+  { id: 'electro-chill-c', title: 'Electro Chill C', group: 'rest', list: 'CHILL', path: 'Page2/Electro Chill C.mp3' },
+  { id: 'soft-urban', title: 'Soft Urban A', group: 'rest', list: 'CHILL', path: 'Page2/Soft Urban A.mp3', local: true },
+  { id: 'chillectro', title: 'Chillectro', group: 'rest', list: 'CHILL', path: 'Page2/Chillectro.mp3' },
+  { id: 'study-and-relax', title: 'Study and Relax', group: 'rest', list: 'CHILL', path: 'featured/Study and Relax.mp3' },
+  { id: 'chill-urban', title: 'Chill Urban', group: 'rest', list: 'CHILL', path: 'Page2/Chill Urban.mp3', local: true },
 ];
 
 const PLAY_MODES = [
@@ -778,7 +875,12 @@ class MusicPlayer {
     this.playPauseIcon = document.getElementById('playPauseIcon');
     this.prevBtn = document.getElementById('prevTrackBtn');
     this.nextBtn = document.getElementById('nextTrackBtn');
-    this.select = document.getElementById('playlistSelect');
+    this.picker = document.getElementById('trackPicker');
+    this.pickerBtn = document.getElementById('trackPickerBtn');
+    this.pickerGroup = document.getElementById('trackPickerGroup');
+    this.pickerTitle = document.getElementById('trackPickerTitle');
+    this.pickerMenu = document.getElementById('trackPickerMenu');
+    this.activeOption = -1;
     this.sourceIndicator = document.getElementById('sourceIndicator');
     this.sourceIcon = document.getElementById('sourceIcon');
     this.sourceLabel = document.getElementById('sourceLabel');
@@ -793,7 +895,17 @@ class MusicPlayer {
     this.nextBtn.addEventListener('click', () => this.step(1));
     this.playModeBtn.addEventListener('click', () => this.cyclePlayMode());
     this.splitToggle.addEventListener('change', () => this.setSplit(this.splitToggle.checked));
-    this.select.addEventListener('change', () => this.selectTrack(this.select.value));
+    this.pickerBtn.addEventListener('click', () => this.togglePicker());
+    this.pickerBtn.addEventListener('keydown', event => this.onPickerKey(event));
+    this.pickerMenu.addEventListener('click', event => {
+      const option = event.target.closest('.track-option');
+      if (!option) return;
+      this.selectTrack(option.dataset.id);
+      this.closePicker();
+    });
+    document.addEventListener('click', event => {
+      if (!this.picker.contains(event.target)) this.closePicker();
+    });
 
     this.refreshPlaylist();
     this.syncUI();
@@ -955,24 +1067,77 @@ class MusicPlayer {
   }
 
   refreshPlaylist() {
-    this.select.innerHTML = '';
-    const groups = this.splitPhases
-      ? [['work', 'WORKOUT'], ['rest', 'REST']]
-      : [[null, null]];
+    this.pickerMenu.innerHTML = '';
+    let lastList = null;
 
-    groups.forEach(([group, label]) => {
-      const parent = group
-        ? this.select.appendChild(Object.assign(document.createElement('optgroup'), { label }))
-        : this.select;
+    this.activeDeck().tracks.forEach(track => {
+      const option = document.createElement('div');
+      option.className = 'track-option';
+      option.dataset.id = track.id;
+      option.setAttribute('role', 'option');
+      if (track.list !== lastList) option.classList.add('is-group-start');
+      lastList = track.list;
 
-      this.pool().forEach(track => {
-        if (group && track.group !== group) return;
-        const option = document.createElement('option');
-        option.value = track.id;
-        option.textContent = track.title;
-        parent.appendChild(option);
-      });
+      const group = document.createElement('span');
+      group.className = 'track-col-group';
+      group.textContent = track.list;
+
+      const title = document.createElement('span');
+      title.className = 'track-col-title';
+      title.textContent = track.title;
+
+      option.append(group, title);
+      this.pickerMenu.appendChild(option);
     });
+  }
+
+  togglePicker() {
+    if (this.pickerMenu.hidden) this.openPicker();
+    else this.closePicker();
+  }
+
+  openPicker() {
+    this.pickerMenu.hidden = false;
+    this.pickerBtn.setAttribute('aria-expanded', 'true');
+    this.activeOption = this.activeDeck().pos;
+    this.highlightOption();
+  }
+
+  closePicker() {
+    if (this.pickerMenu.hidden) return;
+    this.pickerMenu.hidden = true;
+    this.pickerBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  highlightOption() {
+    const options = [...this.pickerMenu.children];
+    options.forEach((option, i) => option.classList.toggle('is-active', i === this.activeOption));
+    const current = options[this.activeOption];
+    if (current) current.scrollIntoView({ block: 'nearest' });
+  }
+
+  onPickerKey(event) {
+    const open = !this.pickerMenu.hidden;
+
+    if (event.key === 'Escape') {
+      this.closePicker();
+      return;
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!open) { this.openPicker(); return; }
+      const count = this.pickerMenu.children.length;
+      if (!count) return;
+      this.activeOption = (this.activeOption + (event.key === 'ArrowDown' ? 1 : -1) + count) % count;
+      this.highlightOption();
+      return;
+    }
+    if (open && event.key === 'Enter') {
+      event.preventDefault();
+      const option = this.pickerMenu.children[this.activeOption];
+      if (option) this.selectTrack(option.dataset.id);
+      this.closePicker();
+    }
   }
 
   toggle() {
@@ -1038,6 +1203,7 @@ class MusicPlayer {
     if (!this.splitPhases) return;
 
     previous.audio.pause();
+    this.refreshPlaylist();
     const deck = this.activeDeck();
     if (!deck.loaded) this.loadDeck(deck, this.enabled);
     else if (this.enabled) deck.audio.play().catch(() => {});
@@ -1096,7 +1262,12 @@ class MusicPlayer {
     // The dropdown already shows the track name, so this line carries state.
     this.titleEl.textContent = label;
     this.metaEl.textContent = `${deck.tracks.length ? deck.pos + 1 : 0} / ${deck.tracks.length} · ${playing ? 'Playing' : 'Paused'}`;
-    if (track) this.select.value = track.id;
+
+    this.pickerGroup.textContent = track ? track.list : '';
+    this.pickerTitle.textContent = track ? track.title : '';
+    [...this.pickerMenu.children].forEach(option => {
+      option.classList.toggle('is-selected', !!track && option.dataset.id === track.id);
+    });
 
     this.playPauseIcon.innerHTML = playing
       ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>'

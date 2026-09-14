@@ -295,6 +295,220 @@
     height: 18px;
     fill: currentColor;
   }
+
+  /* Background Music Player */
+  .player {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px 14px 14px;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .player-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .player-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  .player-source svg {
+    width: 11px;
+    height: 11px;
+    fill: currentColor;
+  }
+
+  .player-source.is-local {
+    color: #ffb74d;
+    opacity: 0.85;
+  }
+
+  .player-head-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .player-mini {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    opacity: 0.7;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease, background 0.2s ease;
+  }
+
+  .player-mini svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+  }
+
+  .player-mini:hover { opacity: 1; }
+  .player-mini.is-active { background: rgba(79, 195, 247, 0.35); opacity: 1; }
+
+  .player-split {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .player-split-text {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    opacity: 0.5;
+  }
+
+  .player-split input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .player-split-track {
+    width: 24px;
+    height: 13px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.2);
+    position: relative;
+    transition: background 0.2s ease;
+  }
+
+  .player-split-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s ease;
+  }
+
+  .player-split input:checked + .player-split-track {
+    background: #4fc3f7;
+  }
+
+  .player-split input:checked + .player-split-track .player-split-knob {
+    transform: translateX(11px);
+  }
+
+  .player-split input:checked ~ .player-split-text,
+  .player-split:has(input:checked) .player-split-text {
+    opacity: 0.95;
+  }
+
+  .player-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .player-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .player-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .player-meta {
+    font-size: 0.72rem;
+    opacity: 0.65;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .player-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .player-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .player-btn svg {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+  }
+
+  .player-btn:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: scale(1.08);
+  }
+
+  .player-btn-main {
+    width: 42px;
+    height: 42px;
+    background: #4fc3f7;
+    color: #1a237e;
+  }
+
+  .player-btn-main svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .player-btn-main:hover {
+    background: #6fd0f9;
+  }
+
+  .player-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .player-playlist {
+    margin-bottom: 0;
+    font-size: 0.8rem;
+  }
+
   @media (max-width: 480px) {
     .circular-timer {
       width: 280px;
@@ -396,9 +610,469 @@
       <button id="pauseBtn" class="btn btn-secondary" disabled>PAUSE</button>
       <button id="resetBtn" class="btn btn-secondary">RESET</button>
     </div>
+
+    <!-- Background Music Player -->
+    <div class="player">
+      <div class="player-head">
+        <span class="player-source" id="sourceIndicator">
+          <svg id="sourceIcon" viewBox="0 0 24 24"></svg>
+          <span id="sourceLabel">Stream</span>
+        </span>
+        <div class="player-head-controls">
+          <button class="player-mini" id="playModeBtn" aria-label="Playback mode">
+            <svg id="playModeIcon" viewBox="0 0 24 24"></svg>
+          </button>
+          <label class="player-split" id="splitLabel">
+            <span class="player-split-text">SPLIT</span>
+            <input type="checkbox" id="splitToggle">
+            <span class="player-split-track"><span class="player-split-knob"></span></span>
+          </label>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-info">
+          <div class="player-title" id="playerTitle">Background Music</div>
+          <div class="player-meta" id="playerMeta">Press play to start</div>
+        </div>
+        <div class="player-buttons">
+          <button class="player-btn" id="prevTrackBtn" aria-label="Previous track">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+          </button>
+          <button class="player-btn player-btn-main" id="playPauseBtn" aria-label="Play">
+            <svg id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button class="player-btn" id="nextTrackBtn" aria-label="Next track">
+            <svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>
+          </button>
+        </div>
+      </div>
+      <select id="playlistSelect" class="preset-select player-playlist" aria-label="Playlist"></select>
+    </div>
   </div>
 
 <script>
+// FreePD tracks (public domain), streamed from the Internet Archive mirror with
+// a self-hosted copy under audio/ as fallback when the mirror is unreachable.
+const ARCHIVE_BASE = 'https://archive.org/download/freepd/';
+
+const BGM_TRACKS = [
+  { id: 'dnb-energy', title: 'Drum n Bass E Energy', group: 'work', path: 'Page2/Drum n Bass E Energy.mp3', local: true },
+  { id: 'drum-n-bass-b-drive', title: 'Drum n Bass B Drive', group: 'work', path: 'Page2/Drum n Bass B Drive.mp3' },
+  { id: 'drum-n-bass-k-megatrack', title: 'Drum n Bass K Megatrack', group: 'work', path: 'Page2/Drum n Bass K Megatrack.mp3' },
+  { id: 'drum-n-bass-j-hit-me', title: 'Drum n Bass J Hit Me', group: 'work', path: 'Page2/Drum n Bass J Hit Me.mp3' },
+  { id: 'drum-n-bass-i-almost-awesome', title: 'Drum n Bass I Almost Awesome', group: 'work', path: 'Page2/Drum n Bass I Almost Awesome.mp3' },
+  { id: 'drum-n-bass-c-super-shaker', title: 'Drum n Bass C Super Shaker', group: 'work', path: 'Page2/Drum n Bass C Super Shaker.mp3' },
+  { id: 'drum-n-bass-h-stutter', title: 'Drum n Bass H Stutter', group: 'work', path: 'Page2/Drum n Bass H Stutter.mp3' },
+  { id: 'electro-dnb', title: 'Electro DnB A', group: 'work', path: 'Page2/Electro DnB A.mp3', local: true },
+  { id: 'electro-dnb-b-chaos', title: 'Electro DnB B Chaos', group: 'work', path: 'Page2/Electro DnB B Chaos.mp3' },
+  { id: 'electro-dnb-quirk', title: 'Electro DnB Quirk', group: 'work', path: 'Page2/Electro DnB Quirk.mp3' },
+  { id: 'jungle-frentic', title: 'Jungle Frentic', group: 'work', path: 'Page2/Jungle Frentic.mp3' },
+  { id: 'jungle-party', title: 'Jungle Party', group: 'work', path: 'Page2/Jungle Party.mp3' },
+  { id: 'jungle-edge', title: 'Jungle Edge', group: 'work', path: 'Page2/Jungle Edge.mp3' },
+  { id: 'jungleshine', title: 'JungleShine', group: 'work', path: 'Page2/JungleShine.mp3' },
+  { id: 'trance-metal-rush', title: 'Trance A Metal Rush', group: 'work', path: 'Page2/Trance A Metal Rush.mp3', local: true },
+  { id: 'trance-e-frantic-bomb', title: 'Trance E Frantic Bomb', group: 'work', path: 'Page2/Trance E Frantic Bomb.mp3' },
+  { id: 'trance-h-jumper', title: 'Trance H Jumper', group: 'work', path: 'Page2/Trance H Jumper.mp3' },
+  { id: 'trance-c-bright-blip', title: 'Trance C Bright Blip', group: 'work', path: 'Page2/Trance C Bright Blip.mp3' },
+  { id: 'trance-f-trade-pep', title: 'Trance F Trade Pep', group: 'work', path: 'Page2/Trance F Trade Pep.mp3' },
+  { id: 'tech-thumper', title: 'Tech E Thumper', group: 'work', path: 'Page2/Tech E Thumper.mp3', local: true },
+  { id: 'tech-b-jab', title: 'Tech B Jab', group: 'work', path: 'Page2/Tech B Jab.mp3' },
+  { id: 'tech-f-grind', title: 'Tech F Grind', group: 'work', path: 'Page2/Tech F Grind.mp3' },
+  { id: 'tech-k-youturn', title: 'Tech K YouTurn', group: 'work', path: 'Page2/Tech K YouTurn.mp3' },
+  { id: 'raveminimal', title: 'Raveminimal', group: 'work', path: 'Page2/Raveminimal.mp3' },
+  { id: 'relentless', title: 'Relentless', group: 'work', path: 'Page2/Relentless.mp3', local: true },
+  { id: 'twister', title: 'Twister', group: 'work', path: 'Page2/Twister.mp3', local: true },
+  { id: 'squanch', title: 'Squanch', group: 'work', path: 'Page2/Squanch.mp3' },
+  { id: 'electrofreak', title: 'ElectroFreak', group: 'work', path: 'Page2/ElectroFreak.mp3' },
+  { id: 'octave-jumper', title: 'Octave Jumper', group: 'work', path: 'Page2/Octave Jumper.mp3' },
+  { id: 'super-snare', title: 'Super Snare', group: 'work', path: 'Page2/Super Snare.mp3' },
+  { id: 'house-a-square', title: 'House A Square', group: 'work', path: 'Page2/House A Square.mp3' },
+  { id: 'house-d-reasonably-cool', title: 'House D Reasonably Cool', group: 'work', path: 'Page2/House D Reasonably Cool.mp3' },
+  { id: 'house-g-room-to-breathe', title: 'House G Room to Breathe', group: 'work', path: 'Page2/House G Room to Breathe.mp3' },
+  { id: 'house-i-aquabeat', title: 'House I Aquabeat', group: 'work', path: 'Page2/House I Aquabeat.mp3' },
+  { id: 'house-grindstone', title: 'House J Grindstone', group: 'work', path: 'Page2/House J Grindstone.mp3', local: true },
+  { id: 'house-e-watery-groove', title: 'House E Watery Groove', group: 'work', path: 'Page2/House E Watery Groove.mp3' },
+  { id: 'funkeriffic', title: 'Funkeriffic', group: 'work', path: 'misc/Funkeriffic.mp3', local: true },
+  { id: 'energizing', title: 'Energizing', group: 'work', path: 'misc/Energizing.mp3' },
+  { id: 'rush', title: 'Rush', group: 'work', path: 'comedy/Rush.mp3' },
+  { id: 'urban-funk-a', title: 'Urban Funk A', group: 'work', path: 'Page2/Urban Funk A.mp3' },
+  { id: 'urban-funk-b', title: 'Urban Funk B', group: 'work', path: 'Page2/Urban Funk B.mp3' },
+  { id: 'urban-cool-trip', title: 'Urban Cool Trip', group: 'work', path: 'Page2/Urban Cool Trip.mp3' },
+  { id: 'urban-mixer', title: 'Urban Mixer', group: 'work', path: 'Page2/Urban Mixer.mp3' },
+  { id: 'hip-hop-b-thick-beat', title: 'Hip Hop B Thick Beat', group: 'work', path: 'Page2/Hip Hop B Thick Beat.mp3' },
+  { id: 'hip-hop-driver', title: 'Hip Hop Driver', group: 'work', path: 'Page2/Hip Hop Driver.mp3' },
+  { id: 'hip-hop-epics', title: 'Hip Hop Epics', group: 'work', path: 'Page2/Hip Hop Epics.mp3' },
+  { id: 'rap-funk', title: 'Rap Funk', group: 'work', path: 'Page2/Rap Funk.mp3' },
+  { id: 'rap-deep-groove', title: 'Rap Deep Groove', group: 'work', path: 'Page2/Rap Deep Groove.mp3' },
+  { id: 'rap-lop-a-dop', title: 'Rap Lop-a-dop', group: 'work', path: 'Page2/Rap Lop-a-dop.mp3' },
+  { id: 'electronic-a-groove-out', title: 'Electronic A Groove Out', group: 'work', path: 'Page2/Electronic A Groove Out.mp3' },
+  { id: 'electronic-g-percussive-party', title: 'Electronic G Percussive Party', group: 'work', path: 'Page2/Electronic G Percussive Party.mp3' },
+  { id: 'electronic-i-crazy-fun', title: 'Electronic I Crazy Fun', group: 'work', path: 'Page2/Electronic I Crazy Fun.mp3' },
+  { id: 'electronic-l-discoed', title: 'Electronic L Discoed', group: 'work', path: 'Page2/Electronic L Discoed.mp3' },
+  { id: 'electronic-q-80s-incarnate', title: 'Electronic Q 80s Incarnate', group: 'work', path: 'Page2/Electronic Q 80s Incarnate.mp3' },
+  { id: 'messy-beat', title: 'Messy Beat', group: 'work', path: 'Page2/Messy Beat.mp3' },
+  { id: 'action-strike', title: 'Action Strike', group: 'work', path: 'scoring/Action Strike.mp3' },
+  { id: 'hit-n-smash', title: 'Hit n Smash', group: 'work', path: 'epic/Hit n Smash.mp3' },
+  { id: 'video-game-blockbuster', title: 'Video Game Blockbuster', group: 'work', path: 'epic/Video Game Blockbuster.mp3' },
+  { id: 'epic-boss-battle', title: 'Epic Boss Battle', group: 'work', path: 'epic/Epic Boss Battle.mp3' },
+  { id: 'chill-beat', title: 'Chill Beat', group: 'rest', path: 'Page2/Chill Beat.mp3', local: true },
+  { id: 'chill-a', title: 'Chill A', group: 'rest', path: 'Page2/Chill A.mp3' },
+  { id: 'electro-chill', title: 'Electro Chill A', group: 'rest', path: 'Page2/Electro Chill A.mp3', local: true },
+  { id: 'electro-chill-c', title: 'Electro Chill C', group: 'rest', path: 'Page2/Electro Chill C.mp3' },
+  { id: 'soft-urban', title: 'Soft Urban A', group: 'rest', path: 'Page2/Soft Urban A.mp3', local: true },
+  { id: 'chillectro', title: 'Chillectro', group: 'rest', path: 'Page2/Chillectro.mp3' },
+  { id: 'study-and-relax', title: 'Study and Relax', group: 'rest', path: 'featured/Study and Relax.mp3' },
+  { id: 'chill-urban', title: 'Chill Urban', group: 'rest', path: 'Page2/Chill Urban.mp3', local: true },
+];
+
+const PLAY_MODES = [
+  { id: 'sequential', label: 'Sequential', icon: 'M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z' },
+  { id: 'repeat', label: 'Repeat one', icon: 'M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z' },
+  { id: 'shuffle', label: 'Shuffle', icon: 'M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z' },
+];
+
+const SOURCE_ICONS = {
+  stream: 'M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z',
+  local: 'M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z',
+};
+
+// Streaming plays the full Archive catalogue; when the mirror fails the whole
+// player drops to local mode, where only the self-hosted subset exists — so the
+// playlist is rebuilt to match rather than leaving unplayable entries behind.
+class MusicPlayer {
+  constructor(tracks) {
+    this.allTracks = tracks;
+    this.sourceMode = navigator.onLine === false ? 'local' : 'stream';
+    this.splitPhases = false;
+    this.playModeIndex = 0;
+    this.phase = 'work';
+    this.enabled = false;
+    this.baseVolume = 0.5;
+    this.duckTimer = null;
+    this.decks = {};
+
+    this.titleEl = document.getElementById('playerTitle');
+    this.metaEl = document.getElementById('playerMeta');
+    this.playPauseBtn = document.getElementById('playPauseBtn');
+    this.playPauseIcon = document.getElementById('playPauseIcon');
+    this.prevBtn = document.getElementById('prevTrackBtn');
+    this.nextBtn = document.getElementById('nextTrackBtn');
+    this.select = document.getElementById('playlistSelect');
+    this.sourceIndicator = document.getElementById('sourceIndicator');
+    this.sourceIcon = document.getElementById('sourceIcon');
+    this.sourceLabel = document.getElementById('sourceLabel');
+    this.playModeBtn = document.getElementById('playModeBtn');
+    this.playModeIcon = document.getElementById('playModeIcon');
+    this.splitToggle = document.getElementById('splitToggle');
+
+    this.buildDecks();
+
+    this.playPauseBtn.addEventListener('click', () => this.toggle());
+    this.prevBtn.addEventListener('click', () => this.step(-1));
+    this.nextBtn.addEventListener('click', () => this.step(1));
+    this.playModeBtn.addEventListener('click', () => this.cyclePlayMode());
+    this.splitToggle.addEventListener('change', () => this.setSplit(this.splitToggle.checked));
+    this.select.addEventListener('change', () => this.selectTrack(this.select.value));
+
+    this.refreshPlaylist();
+    this.syncUI();
+  }
+
+  get playMode() {
+    return PLAY_MODES[this.playModeIndex].id;
+  }
+
+  pool() {
+    return this.sourceMode === 'local'
+      ? this.allTracks.filter(t => t.local)
+      : this.allTracks;
+  }
+
+  deckKeys() {
+    return this.splitPhases ? ['work', 'rest'] : ['all'];
+  }
+
+  activeKey() {
+    return this.splitPhases ? this.phase : 'all';
+  }
+
+  activeDeck() {
+    return this.decks[this.activeKey()];
+  }
+
+  currentTrack() {
+    const deck = this.activeDeck();
+    return deck ? deck.tracks[deck.pos] : null;
+  }
+
+  createDeck() {
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    audio.volume = this.baseVolume;
+    const deck = { audio, tracks: [], pos: 0, loaded: false };
+    audio.addEventListener('error', () => this.handleError(deck));
+    audio.addEventListener('ended', () => this.handleEnded(deck));
+    audio.addEventListener('playing', () => this.syncUI());
+    audio.addEventListener('pause', () => this.syncUI());
+    return deck;
+  }
+
+  buildDecks() {
+    const pool = this.pool();
+    const previous = this.decks;
+    const next = {};
+
+    this.deckKeys().forEach(key => {
+      const deck = previous[key] || this.createDeck();
+      deck.tracks = key === 'all' ? pool : pool.filter(t => t.group === key);
+      deck.pos = Math.min(deck.pos, Math.max(0, deck.tracks.length - 1));
+      next[key] = deck;
+    });
+
+    Object.entries(previous).forEach(([key, deck]) => {
+      if (!next[key]) deck.audio.pause();
+    });
+
+    this.decks = next;
+  }
+
+  srcFor(track) {
+    if (this.sourceMode === 'local') return `audio/${track.id}.m4a`;
+    return ARCHIVE_BASE + track.path.split('/').map(encodeURIComponent).join('/');
+  }
+
+  loadDeck(deck, autoplay, seekTo = 0) {
+    const track = deck.tracks[deck.pos];
+    if (!track) return;
+
+    deck.audio.src = this.srcFor(track);
+    deck.loaded = true;
+
+    if (seekTo > 0) {
+      deck.audio.addEventListener('loadedmetadata', () => {
+        if (seekTo < deck.audio.duration) deck.audio.currentTime = seekTo;
+      }, { once: true });
+    }
+    if (autoplay) deck.audio.play().catch(() => {});
+    this.syncUI();
+  }
+
+  handleError(deck) {
+    if (this.sourceMode === 'local') {
+      this.metaEl.textContent = 'Track unavailable';
+      return;
+    }
+    this.setSourceMode('local');
+  }
+
+  handleEnded(deck) {
+    if (this.playMode === 'repeat') {
+      deck.audio.currentTime = 0;
+      deck.audio.play().catch(() => {});
+      return;
+    }
+    this.stepDeck(deck, 1, true);
+  }
+
+  setSourceMode(mode) {
+    if (mode === this.sourceMode) return;
+
+    const current = this.currentTrack();
+    const wasPlaying = this.enabled;
+
+    this.sourceMode = mode;
+    Object.values(this.decks).forEach(deck => { deck.loaded = false; });
+    this.buildDecks();
+    this.refreshPlaylist();
+
+    const deck = this.activeDeck();
+    const index = current ? deck.tracks.findIndex(t => t.id === current.id) : -1;
+    deck.pos = index >= 0 ? index : 0;
+    this.loadDeck(deck, wasPlaying);
+  }
+
+  setSplit(on) {
+    if (on === this.splitPhases) return;
+
+    const previous = this.activeDeck();
+    const current = this.currentTrack();
+    const resumeAt = previous ? previous.audio.currentTime : 0;
+    const wasPlaying = this.enabled && previous && !previous.audio.paused;
+
+    Object.values(this.decks).forEach(deck => deck.audio.pause());
+    this.splitPhases = on;
+    this.decks = {};
+    this.buildDecks();
+    this.refreshPlaylist();
+
+    const deck = this.activeDeck();
+    const index = current ? deck.tracks.findIndex(t => t.id === current.id) : -1;
+    if (index >= 0) {
+      deck.pos = index;
+      this.loadDeck(deck, wasPlaying, resumeAt);
+    } else {
+      this.loadDeck(deck, wasPlaying);
+    }
+  }
+
+  cyclePlayMode() {
+    this.playModeIndex = (this.playModeIndex + 1) % PLAY_MODES.length;
+    this.syncUI();
+  }
+
+  refreshPlaylist() {
+    this.select.innerHTML = '';
+    const groups = this.splitPhases
+      ? [['work', 'WORKOUT'], ['rest', 'REST']]
+      : [[null, null]];
+
+    groups.forEach(([group, label]) => {
+      const parent = group
+        ? this.select.appendChild(Object.assign(document.createElement('optgroup'), { label }))
+        : this.select;
+
+      this.pool().forEach(track => {
+        if (group && track.group !== group) return;
+        const option = document.createElement('option');
+        option.value = track.id;
+        option.textContent = track.title;
+        parent.appendChild(option);
+      });
+    });
+  }
+
+  toggle() {
+    if (this.activeDeck().audio.paused) this.play();
+    else this.pause();
+  }
+
+  play() {
+    this.enabled = true;
+    const deck = this.activeDeck();
+    if (!deck.loaded) this.loadDeck(deck, false);
+    deck.audio.play().catch(() => {
+      this.metaEl.textContent = 'Tap play again to allow audio';
+    });
+    this.syncUI();
+  }
+
+  pause() {
+    this.enabled = false;
+    this.activeDeck().audio.pause();
+    this.syncUI();
+  }
+
+  step(delta) {
+    this.stepDeck(this.activeDeck(), delta, this.enabled);
+  }
+
+  stepDeck(deck, delta, autoplay) {
+    const count = deck.tracks.length;
+    if (!count) return;
+
+    if (this.playMode === 'shuffle' && count > 1) {
+      let next = deck.pos;
+      while (next === deck.pos) next = Math.floor(Math.random() * count);
+      deck.pos = next;
+    } else {
+      deck.pos = (deck.pos + delta + count) % count;
+    }
+    this.loadDeck(deck, autoplay);
+  }
+
+  selectTrack(trackId) {
+    const track = this.allTracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    if (this.splitPhases && track.group !== this.phase) {
+      this.activeDeck().audio.pause();
+      this.phase = track.group;
+    }
+    const deck = this.activeDeck();
+    const index = deck.tracks.findIndex(t => t.id === trackId);
+    if (index < 0) return;
+
+    deck.pos = index;
+    this.loadDeck(deck, this.enabled);
+  }
+
+  setPhase(phase) {
+    if (phase === this.phase) return;
+
+    const previous = this.activeDeck();
+    this.phase = phase;
+    if (!this.splitPhases) return;
+
+    previous.audio.pause();
+    const deck = this.activeDeck();
+    if (!deck.loaded) this.loadDeck(deck, this.enabled);
+    else if (this.enabled) deck.audio.play().catch(() => {});
+    this.syncUI();
+  }
+
+  // Browsers only allow playback started from a user gesture, so prime the
+  // decks on the first START press.
+  unlock() {
+    Object.values(this.decks).forEach(deck => {
+      if (!deck.loaded) {
+        const track = deck.tracks[deck.pos];
+        if (!track) return;
+        deck.audio.src = this.srcFor(track);
+        deck.loaded = true;
+      }
+      const played = deck.audio.play();
+      if (!played) return;
+      played
+        .then(() => {
+          if (!this.enabled || deck !== this.activeDeck()) deck.audio.pause();
+        })
+        .catch(() => {});
+    });
+  }
+
+  duck(ms = 800) {
+    const audio = this.activeDeck().audio;
+    if (audio.paused) return;
+    clearTimeout(this.duckTimer);
+    audio.volume = this.baseVolume * 0.25;
+    this.duckTimer = setTimeout(() => { audio.volume = this.baseVolume; }, ms);
+  }
+
+  syncUI() {
+    const deck = this.activeDeck();
+    const track = this.currentTrack();
+    const playing = !deck.audio.paused;
+    const mode = PLAY_MODES[this.playModeIndex];
+
+    let label = 'All tracks';
+    if (this.splitPhases) label = this.phase === 'rest' ? 'Rest mix' : 'Workout mix';
+
+    // The dropdown already shows the track name, so this line carries state.
+    this.titleEl.textContent = label;
+    this.metaEl.textContent = `${deck.tracks.length ? deck.pos + 1 : 0} / ${deck.tracks.length} · ${playing ? 'Playing' : 'Paused'}`;
+    if (track) this.select.value = track.id;
+
+    this.playPauseIcon.innerHTML = playing
+      ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>'
+      : '<path d="M8 5v14l11-7z"/>';
+    this.playPauseBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+
+    this.playModeIcon.innerHTML = `<path d="${mode.icon}"/>`;
+    this.playModeBtn.title = `Playback: ${mode.label}`;
+    this.playModeBtn.classList.toggle('is-active', mode.id !== 'sequential');
+
+    const local = this.sourceMode === 'local';
+    this.sourceIcon.innerHTML = `<path d="${local ? SOURCE_ICONS.local : SOURCE_ICONS.stream}"/>`;
+    this.sourceLabel.textContent = local ? 'Local' : 'Stream';
+    this.sourceIndicator.classList.toggle('is-local', local);
+    this.sourceIndicator.title = local
+      ? `Playing the ${this.pool().length} self-hosted tracks (archive unreachable)`
+      : `Streaming ${this.pool().length} tracks from the Internet Archive`;
+
+    this.splitToggle.checked = this.splitPhases;
+  }
+}
+
 class IntervalTimer {
   constructor() {
     this.state = 'idle';        // idle | countdown | running | paused | complete
@@ -431,6 +1105,7 @@ class IntervalTimer {
     this.setsIndicator = document.getElementById('setsIndicator');
     this.currentTime = document.getElementById('currentTime');
     this.muteButton = document.getElementById('muteButton');
+    this.music = new MusicPlayer(BGM_TRACKS);
 
     this.circumference = 2 * Math.PI * 42;
     this.progressCircle.style.strokeDasharray = this.circumference;
@@ -531,6 +1206,7 @@ class IntervalTimer {
     this.state = 'countdown';
     this.setButtons(true);
     this.createSetsIndicator();
+    this.music.unlock();
     this.playStartChime();
     this.beginPhase(5);
   }
@@ -553,6 +1229,7 @@ class IntervalTimer {
     this.phase = 'exercise';
     this.currentSet = 0;
     this.lastTickSecond = null;
+    this.music.setPhase('work');
     this.setButtons(false);
     this.updateInitialTime();
     this.createSetsIndicator();
@@ -613,6 +1290,7 @@ class IntervalTimer {
       this.state = 'running';
       this.phase = 'exercise';
       this.currentSet = 0;
+      this.music.setPhase('work');
       this.playWorkStart();
       this.flashScreen();
       this.createSetsIndicator();
@@ -629,6 +1307,7 @@ class IntervalTimer {
         return;
       }
       this.phase = 'rest';
+      this.music.setPhase('rest');
       this.playRestStart();
       this.flashScreen();
       this.createSetsIndicator();
@@ -640,6 +1319,7 @@ class IntervalTimer {
         this.complete();
         return;
       }
+      this.music.setPhase('work');
       this.playWorkStart();
       this.flashScreen();
       this.createSetsIndicator();
@@ -804,6 +1484,7 @@ class IntervalTimer {
 
   // Sustained horn: softer onset, long plateau, quick fade — a "뚜—", not a pip.
   playHorn({ freq, dur, vol, when = 0, cutoff }) {
+    this.music.duck((when + dur) * 1000 + 250);
     this.playNote({
       freq, dur, vol, when, cutoff,
       wave: 'sawtooth',
@@ -814,6 +1495,7 @@ class IntervalTimer {
   }
 
   playTick() {
+    this.music.duck(450);
     this.playNote({ freq: 783.99, dur: 0.08, vol: 0.28, cutoff: 2800, hold: 0.35 });
   }
 

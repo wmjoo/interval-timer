@@ -70,7 +70,7 @@
   .timer-progress-circle {
     fill: none;
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.1s ease, stroke 0.3s ease;
+    transition: stroke 0.35s ease;
   }
 
   .timer-content {
@@ -401,19 +401,22 @@
 <script>
 class IntervalTimer {
   constructor() {
-    this.isRunning = false;
-    this.isPaused = false;
+    this.state = 'idle';        // idle | countdown | running | paused | complete
+    this.resumeState = null;
+    this.phase = 'exercise';    // exercise | rest
     this.currentSet = 0;
-    this.isExercisePhase = true;
-    this.timeLeft = 40;
     this.totalTime = 40;
-    this.intervalId = null;
+    this.timeLeft = 40;
+    this.remainingMs = 40000;
+    this.phaseEndMs = 0;
+    this.rafId = null;
+    this.fallbackIntervalId = null;
     this.clockIntervalId = null;
+    this.lastTickSecond = null;
     this.isMuted = false;
-    this.isCountdown = false;
-    this.countdownIntervalId = null;
     this.audioContext = null;
-    
+    this.masterGain = null;
+
     this.exerciseTimeInput = document.getElementById('exerciseTime');
     this.restTimeInput = document.getElementById('restTime');
     this.totalSetsInput = document.getElementById('totalSets');
@@ -425,422 +428,410 @@ class IntervalTimer {
     this.timerStatus = document.getElementById('timerStatus');
     this.timerProgress = document.getElementById('timerProgress');
     this.progressCircle = document.getElementById('progressCircle');
-    // Calculate circle circumference (r = 42, viewBox 100x100, stroke-width 15)
-    this.circumference = 2 * Math.PI * 42; // approximately 263.89
-    // Initial stroke-dasharray setting
-    if (this.progressCircle) {
-      this.progressCircle.style.strokeDasharray = this.circumference;
-      this.progressCircle.style.strokeDashoffset = this.circumference;
-    }
     this.setsIndicator = document.getElementById('setsIndicator');
     this.currentTime = document.getElementById('currentTime');
     this.muteButton = document.getElementById('muteButton');
-    
+
+    this.circumference = 2 * Math.PI * 42;
+    this.progressCircle.style.strokeDasharray = this.circumference;
+    this.progressCircle.style.strokeDashoffset = this.circumference;
+
     this.initializeEventListeners();
-    this.createSetsIndicator();
-    this.updateDisplay();
+    this.reset();
     this.startClock();
   }
-  
+
   initializeEventListeners() {
     this.startBtn.addEventListener('click', () => this.start());
     this.pauseBtn.addEventListener('click', () => this.pause());
     this.resetBtn.addEventListener('click', () => this.reset());
     this.muteButton.addEventListener('click', () => this.toggleMute());
-    
-    this.presetSelect.addEventListener('change', () => {
-      this.applyPreset();
-    });
-    
-    this.totalSetsInput.addEventListener('change', () => {
-      this.createSetsIndicator();
-    });
-    
-    // Apply settings only when timer is not running
+
+    this.presetSelect.addEventListener('change', () => this.applyPreset());
+    this.totalSetsInput.addEventListener('change', () => this.createSetsIndicator());
+
     [this.exerciseTimeInput, this.restTimeInput].forEach(input => {
       input.addEventListener('change', () => {
-        if (!this.isRunning && !this.isCountdown) {
-          this.updateInitialTime();
-        }
+        if (this.isIdle()) this.updateInitialTime();
       });
     });
   }
-  
+
+  isIdle() {
+    return this.state === 'idle' || this.state === 'complete';
+  }
+
+  exerciseSeconds() {
+    return Math.max(1, parseInt(this.exerciseTimeInput.value) || 1);
+  }
+
+  restSeconds() {
+    return Math.max(1, parseInt(this.restTimeInput.value) || 1);
+  }
+
+  totalSets() {
+    return Math.max(1, parseInt(this.totalSetsInput.value) || 1);
+  }
+
   applyPreset() {
     const preset = this.presetSelect.value;
     if (!preset) return;
-    
+
     const [exercise, rest, sets] = preset.split('/').map(Number);
     this.exerciseTimeInput.value = exercise;
     this.restTimeInput.value = rest;
     this.totalSetsInput.value = sets;
-    
-    if (!this.isRunning && !this.isCountdown) {
+
+    if (this.isIdle()) {
       this.updateInitialTime();
       this.createSetsIndicator();
     }
   }
-  
+
   createSetsIndicator() {
-    const totalSets = parseInt(this.totalSetsInput.value);
+    const totalSets = this.totalSets();
     this.setsIndicator.innerHTML = '';
-    
+
     for (let i = 0; i < totalSets; i++) {
       const dot = document.createElement('div');
       dot.className = 'set-dot';
       if (i < this.currentSet) {
         dot.classList.add('completed');
-      } else if (i === this.currentSet && this.isRunning) {
+      } else if (i === this.currentSet && this.state === 'running') {
         dot.classList.add('current');
       }
       this.setsIndicator.appendChild(dot);
     }
   }
-  
+
   updateInitialTime() {
-    if (this.isExercisePhase) {
-      this.timeLeft = parseInt(this.exerciseTimeInput.value);
-      this.totalTime = parseInt(this.exerciseTimeInput.value);
-    } else {
-      this.timeLeft = parseInt(this.restTimeInput.value);
-      this.totalTime = parseInt(this.restTimeInput.value);
-    }
-    this.updateDisplay();
+    const seconds = this.phase === 'rest' ? this.restSeconds() : this.exerciseSeconds();
+    this.totalTime = seconds;
+    this.timeLeft = seconds;
+    this.remainingMs = seconds * 1000;
+    this.render();
   }
-  
+
   start() {
-    if (!this.isRunning && !this.isPaused && !this.isCountdown) {
-      // New start - begin with 5-second countdown
-      this.currentSet = 0;
-      this.isExercisePhase = true;
-      this.startCountdown();
+    if (this.state === 'paused') {
+      this.state = this.resumeState || 'running';
+      this.resumeState = null;
+      this.phaseEndMs = performance.now() + this.remainingMs;
+      this.setButtons(true);
+      this.createSetsIndicator();
+      this.startLoop();
+      this.render();
       return;
     }
-    
-    // Resume after pause
-    this.isRunning = true;
-    this.isPaused = false;
-    this.startBtn.disabled = true;
-    this.pauseBtn.disabled = false;
-    
-    this.createSetsIndicator();
-    this.updateDisplay();
-    
-    this.intervalId = setInterval(() => {
-      this.tick();
-    }, 1000);
-  }
-  
-  startCountdown() {
-    this.isCountdown = true;
-    this.startBtn.disabled = true;
-    this.pauseBtn.disabled = false;
-    
-    let countdown = 5;
-    this.timeLeft = countdown;
-    this.totalTime = 5;
-    this.timerStatus.textContent = 'Ready';
-    this.timerStatus.className = 'timer-status';
-    this.updateDisplay();
-    
-    // Start chime (like a broadcast time signal) + then countdown ticks
-    this.playStartChime();
-    setTimeout(() => {
-      if (this.isCountdown) this.playCountdownBeep(countdown);
-    }, 650);
-    
-    this.countdownIntervalId = setInterval(() => {
-      countdown--;
-      this.timeLeft = countdown;
-      this.updateDisplay();
-      
-      if (countdown > 0) {
-        this.playCountdownBeep(countdown);
-      } else {
-        // Countdown complete
-        clearInterval(this.countdownIntervalId);
-        this.isCountdown = false;
-        this.playCountdownBeep(0, true);
-        
-        // Start actual timer
-        this.currentSet = 0;
-        this.isExercisePhase = true;
-        this.timeLeft = parseInt(this.exerciseTimeInput.value);
-        this.totalTime = parseInt(this.exerciseTimeInput.value);
-        
-        this.isRunning = true;
-        this.createSetsIndicator();
-        this.updateDisplay();
-        
-        this.intervalId = setInterval(() => {
-          this.tick();
-        }, 1000);
-      }
-    }, 1000);
-  }
-  
-  pause() {
-    if (this.isRunning) {
-      this.isRunning = false;
-      this.isPaused = true;
-      this.startBtn.disabled = false;
-      this.pauseBtn.disabled = true;
-      clearInterval(this.intervalId);
-    } else if (this.isCountdown) {
-      // Pause during countdown
-      this.isCountdown = false;
-      this.isPaused = true;
-      this.startBtn.disabled = false;
-      this.pauseBtn.disabled = true;
-      clearInterval(this.countdownIntervalId);
-    }
-  }
-  
-  reset() {
-    this.isRunning = false;
-    this.isPaused = false;
-    this.isCountdown = false;
-    this.currentSet = 0;
-    this.isExercisePhase = true;
-    this.timeLeft = parseInt(this.exerciseTimeInput.value);
-    this.totalTime = parseInt(this.exerciseTimeInput.value);
-    
-    this.startBtn.disabled = false;
-    this.pauseBtn.disabled = true;
-    
-    clearInterval(this.intervalId);
-    clearInterval(this.countdownIntervalId);
-    this.createSetsIndicator();
-    this.updateDisplay();
-  }
-  
-  tick() {
-    this.timeLeft--;
-    this.updateDisplay();
-    
-    if (this.timeLeft <= 0) {
-      this.nextPhase();
-    }
-  }
-  
-  nextPhase() {
-    this.playBeep();
-    this.flashScreen();
-    
-    const totalSets = parseInt(this.totalSetsInput.value);
-    if (this.isExercisePhase) {
-      // If this was the last set, finish immediately (no rest after final work)
-      if (this.currentSet >= totalSets - 1) {
-        this.complete(true);
-        return;
-      }
 
-      // Exercise -> Rest
-      this.isExercisePhase = false;
-      this.timeLeft = parseInt(this.restTimeInput.value);
-      this.totalTime = parseInt(this.restTimeInput.value);
-    } else {
-      // Rest -> Next set exercise
-      this.currentSet++;
-      this.isExercisePhase = true;
-      
-      if (this.currentSet >= totalSets) {
-        // All sets completed
-        this.complete(true);
+    if (this.state === 'running' || this.state === 'countdown') return;
+
+    this.currentSet = 0;
+    this.phase = 'exercise';
+    this.state = 'countdown';
+    this.setButtons(true);
+    this.createSetsIndicator();
+    this.playStartChime();
+    this.beginPhase(5);
+  }
+
+  pause() {
+    if (this.state !== 'running' && this.state !== 'countdown') return;
+
+    this.remainingMs = Math.max(0, this.phaseEndMs - performance.now());
+    this.resumeState = this.state;
+    this.state = 'paused';
+    this.stopLoop();
+    this.setButtons(false);
+    this.render();
+  }
+
+  reset() {
+    this.stopLoop();
+    this.state = 'idle';
+    this.resumeState = null;
+    this.phase = 'exercise';
+    this.currentSet = 0;
+    this.lastTickSecond = null;
+    this.setButtons(false);
+    this.updateInitialTime();
+    this.createSetsIndicator();
+  }
+
+  beginPhase(seconds) {
+    this.totalTime = seconds;
+    this.timeLeft = seconds;
+    this.remainingMs = seconds * 1000;
+    this.phaseEndMs = performance.now() + seconds * 1000;
+    this.lastTickSecond = seconds;
+    this.render();
+    this.startLoop();
+  }
+
+  // rAF drives the smooth ring; the interval is a backup driver for when the
+  // tab is hidden and rAF stops firing entirely.
+  startLoop() {
+    this.stopLoop();
+    const step = () => {
+      this.rafId = requestAnimationFrame(step);
+      this.frame();
+    };
+    this.rafId = requestAnimationFrame(step);
+    this.fallbackIntervalId = setInterval(() => this.frame(), 250);
+  }
+
+  stopLoop() {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    if (this.fallbackIntervalId !== null) {
+      clearInterval(this.fallbackIntervalId);
+      this.fallbackIntervalId = null;
+    }
+  }
+
+  frame() {
+    if (this.state !== 'running' && this.state !== 'countdown') return;
+
+    this.remainingMs = Math.max(0, this.phaseEndMs - performance.now());
+    const whole = Math.ceil(this.remainingMs / 1000);
+
+    if (whole !== this.lastTickSecond) {
+      this.lastTickSecond = whole;
+      if (whole > 0 && whole <= 3) this.playTick();
+    }
+
+    this.timeLeft = whole;
+    this.render();
+
+    if (this.remainingMs <= 0) this.advance();
+  }
+
+  advance() {
+    if (this.state === 'countdown') {
+      this.state = 'running';
+      this.phase = 'exercise';
+      this.currentSet = 0;
+      this.playWorkStart();
+      this.flashScreen();
+      this.createSetsIndicator();
+      this.beginPhase(this.exerciseSeconds());
+      return;
+    }
+
+    const totalSets = this.totalSets();
+
+    if (this.phase === 'exercise') {
+      // No rest after the final work block
+      if (this.currentSet >= totalSets - 1) {
+        this.complete();
         return;
       }
-      
-      this.timeLeft = parseInt(this.exerciseTimeInput.value);
-      this.totalTime = parseInt(this.exerciseTimeInput.value);
+      this.phase = 'rest';
+      this.playRestStart();
+      this.flashScreen();
+      this.createSetsIndicator();
+      this.beginPhase(this.restSeconds());
+    } else {
+      this.currentSet++;
+      this.phase = 'exercise';
+      if (this.currentSet >= totalSets) {
+        this.complete();
+        return;
+      }
+      this.playWorkStart();
+      this.flashScreen();
+      this.createSetsIndicator();
+      this.beginPhase(this.exerciseSeconds());
     }
-    
-    this.createSetsIndicator();
-    this.updateDisplay();
   }
-  
-  complete(alreadyFlashed = false) {
-    this.isRunning = false;
-    this.startBtn.disabled = false;
-    this.pauseBtn.disabled = true;
-    clearInterval(this.intervalId);
-    
-    this.timerStatus.textContent = 'Complete!';
-    this.timerDisplay.textContent = '00';
-    if (!alreadyFlashed) this.flashScreen();
-    this.playCompletionSound();
-    
-    // Mark all sets as completed
-    const dots = this.setsIndicator.querySelectorAll('.set-dot');
-    dots.forEach(dot => {
+
+  complete() {
+    this.stopLoop();
+    this.state = 'complete';
+    this.timeLeft = 0;
+    this.remainingMs = 0;
+    this.setButtons(false);
+    this.render();
+    this.flashScreen();
+    this.playCompletion();
+
+    this.setsIndicator.querySelectorAll('.set-dot').forEach(dot => {
       dot.classList.remove('current');
       dot.classList.add('completed');
     });
   }
-  
-  updateDisplay() {
-    this.timerDisplay.textContent = this.timeLeft.toString().padStart(2, '0');
-    
-    if (this.isCountdown) {
+
+  setButtons(active) {
+    this.startBtn.disabled = active;
+    this.pauseBtn.disabled = !active;
+  }
+
+  render() {
+    this.timerDisplay.textContent = String(this.timeLeft).padStart(2, '0');
+
+    const leadIn = this.state === 'countdown' ||
+      (this.state === 'paused' && this.resumeState === 'countdown');
+
+    if (this.state === 'complete') {
+      this.timerStatus.textContent = 'Complete!';
+      this.timerStatus.className = 'timer-status';
+    } else if (leadIn || this.state === 'idle') {
       this.timerStatus.textContent = 'Ready';
       this.timerStatus.className = 'timer-status';
-    } else if (!this.isRunning && !this.isPaused) {
-      this.timerStatus.textContent = 'Ready';
-      this.timerStatus.className = 'timer-status';
-    } else if (this.isExercisePhase) {
+    } else if (this.phase === 'exercise') {
       this.timerStatus.textContent = 'Exercise';
       this.timerStatus.className = 'timer-status exercise';
     } else {
       this.timerStatus.textContent = 'Rest';
       this.timerStatus.className = 'timer-status rest';
     }
-    
-    // Update progress (from 0% to 100%)
-    const progress = ((this.totalTime - this.timeLeft) / this.totalTime) * 100;
-    
-    // Red when <= 5 seconds, otherwise green
-    const progressColor = this.timeLeft <= 5 ? '#f44336' : '#4caf50';
-    
-    // Update SVG circular progress bar (smooth rendering)
-    const progressPercent = Math.min(100, Math.max(0, progress));
-    // Adjust stroke-dashoffset to show progress (clockwise from 12 o'clock)
-    // Subtract progress from full circumference to reveal the filled portion
-    const offset = this.circumference - (progressPercent / 100) * this.circumference;
-    this.progressCircle.style.strokeDashoffset = offset;
-    this.progressCircle.style.stroke = progressColor;
+
+    const elapsed = this.totalTime > 0
+      ? 1 - this.remainingMs / (this.totalTime * 1000)
+      : 0;
+    const progress = Math.min(1, Math.max(0, elapsed));
+
+    this.progressCircle.style.strokeDashoffset = this.circumference * (1 - progress);
+    this.progressCircle.style.stroke = this.remainingMs <= 5000 ? '#f44336' : '#4caf50';
   }
-  
+
   startClock() {
     this.updateClock();
-    this.clockIntervalId = setInterval(() => {
-      this.updateClock();
-    }, 1000);
+    this.clockIntervalId = setInterval(() => this.updateClock(), 1000);
   }
-  
+
   updateClock() {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
     this.currentTime.textContent = `${hours}:${minutes}`;
   }
-  
+
   toggleMute() {
     this.isMuted = !this.isMuted;
     const muteIcon = document.getElementById('muteIcon');
-    
+
     if (this.isMuted) {
-      // Muted icon (with X)
       muteIcon.innerHTML = '<path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L7 9H4c-.55 0-1 .45-1 1z"/><path d="m19.07 4.93-1.41 1.41L16.25 7.75A4.978 4.978 0 0 1 17 10c0 1.77-1.02 3.29-2.5 4.03v2.21l2.45 2.45c.39-.23.76-.5 1.1-.8.85-.74 1.36-1.82 1.36-2.96V10.5c0-.28-.22-.5-.5-.5s-.5.22-.5.5v4.43c0 .45-.17.87-.47 1.18l1.24 1.24 1.41-1.41L19.07 4.93z"/>';
       this.muteButton.classList.add('muted');
       this.muteButton.title = 'Unmute';
     } else {
-      // Speaker icon (normal)
       muteIcon.innerHTML = '<path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L7 9H4c-.55 0-1 .45-1 1zm13.5 2c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
       this.muteButton.classList.remove('muted');
       this.muteButton.title = 'Mute';
     }
   }
-  
+
   flashScreen() {
     document.body.classList.add('flash');
-    setTimeout(() => {
-      document.body.classList.remove('flash');
-    }, 500);
+    setTimeout(() => document.body.classList.remove('flash'), 500);
   }
 
   getAudioContext() {
     if (this.isMuted) return null;
 
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      if (this.audioContext.state === 'suspended') {
-        // Resume best-effort (may require user gesture depending on browser)
-        this.audioContext.resume().catch(() => {});
+    if (!this.audioContext || this.audioContext.state === 'closed') {
+      try {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        return null;
       }
-      return this.audioContext;
+
+      const compressor = this.audioContext.createDynamicsCompressor();
+      compressor.threshold.value = -12;
+      compressor.knee.value = 6;
+      compressor.ratio.value = 10;
+      compressor.attack.value = 0.002;
+      compressor.release.value = 0.12;
+
+      this.masterGain = this.audioContext.createGain();
+      this.masterGain.gain.value = 0.8;
+      this.masterGain.connect(compressor);
+      compressor.connect(this.audioContext.destination);
     }
 
-    try {
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      return this.audioContext;
-    } catch (e) {
-      return null;
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume().catch(() => {});
     }
+    return this.audioContext;
   }
 
-  playTone({ frequency, duration = 0.12, volume = 0.25, type = 'triangle', startDelay = 0 }) {
-    const audioContext = this.getAudioContext();
-    if (!audioContext) return;
+  // One synth voice: detuned pulse pair, an octave sine and an optional sub,
+  // through a lowpass — the blunt horn a gym PA puts out.
+  playNote({ freq, dur = 0.1, vol = 0.3, when = 0, wave = 'square', cutoff, hold = 0.45, attack = 0.006, sub = 0 }) {
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
 
-    const t0 = audioContext.currentTime + Math.max(0, startDelay);
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    const t0 = ctx.currentTime + Math.max(0, when);
+    const end = t0 + dur;
 
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, t0);
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(cutoff || freq * 5, t0);
+    filter.Q.value = 0.8;
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol, t0 + attack);
+    gain.gain.setValueAtTime(vol, t0 + dur * hold);
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
-    const attack = Math.min(0.02, duration * 0.2);
-    const release = Math.min(0.06, duration * 0.3);
-    const sustain = Math.max(0, duration - attack - release);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
 
-    gainNode.gain.setValueAtTime(0, t0);
-    gainNode.gain.linearRampToValueAtTime(volume, t0 + attack);
-    gainNode.gain.setValueAtTime(volume, t0 + attack + sustain);
-    gainNode.gain.linearRampToValueAtTime(0, t0 + duration);
+    const voices = [
+      { type: wave, freq, detune: 0, level: 1 },
+      { type: wave, freq, detune: 8, level: 0.55 },
+      { type: 'sine', freq: freq * 2, detune: 0, level: 0.3 },
+    ];
+    if (sub > 0) voices.push({ type: 'sine', freq: freq / 2, detune: 0, level: sub });
 
-    oscillator.start(t0);
-    oscillator.stop(t0 + duration + 0.02);
+    voices.forEach(voice => {
+      const osc = ctx.createOscillator();
+      const mix = ctx.createGain();
+      osc.type = voice.type;
+      osc.frequency.setValueAtTime(voice.freq, t0);
+      osc.detune.setValueAtTime(voice.detune, t0);
+      mix.gain.value = voice.level;
+      osc.connect(mix);
+      mix.connect(filter);
+      osc.start(t0);
+      osc.stop(end + 0.03);
+    });
+  }
+
+  // Sustained horn: softer onset, long plateau, quick fade — a "뚜—", not a pip.
+  playHorn({ freq, dur, vol, when = 0, cutoff }) {
+    this.playNote({
+      freq, dur, vol, when, cutoff,
+      wave: 'sawtooth',
+      hold: 0.86,
+      attack: 0.022,
+      sub: 0.45,
+    });
+  }
+
+  playTick() {
+    this.playNote({ freq: 783.99, dur: 0.08, vol: 0.28, cutoff: 2800, hold: 0.35 });
   }
 
   playStartChime() {
-    if (this.isMuted) return;
-
-    // "시보" 느낌의 3연 비프 (삐-삐-삐-). 마지막을 살짝 길게.
-    const frequency = 1000;
-    this.playTone({ frequency, duration: 0.12, volume: 0.38, type: 'sine', startDelay: 0.0 });
-    this.playTone({ frequency, duration: 0.12, volume: 0.38, type: 'sine', startDelay: 0.22 });
-    this.playTone({ frequency, duration: 0.22, volume: 0.42, type: 'sine', startDelay: 0.44 });
+    this.playHorn({ freq: 440.0, dur: 0.45, vol: 0.3, cutoff: 1700 });
   }
-  
-  playBeep() {
-    if (this.isMuted) return;
-    // A slightly longer, smooth beep for phase changes
-    this.playTone({ frequency: 440, duration: 0.9, volume: 0.35, type: 'sine' });
+
+  playWorkStart() {
+    this.playHorn({ freq: 523.25, dur: 1.15, vol: 0.38, cutoff: 2200 });
   }
-  
-  playCompletionSound() {
-    // Don't play audio when muted
-    if (this.isMuted) return;
-    
-    // 3 beeps on completion
-    for (let i = 0; i < 3; i++) {
-      setTimeout(() => this.playBeep(), i * 200);
-    }
+
+  playRestStart() {
+    this.playHorn({ freq: 349.23, dur: 0.95, vol: 0.36, cutoff: 1400 });
   }
-  
-  playCountdownBeep(secondsLeft, isFinal = false) {
-    if (this.isMuted) return;
 
-    if (isFinal) {
-      // "GO" beep (longer + higher)
-      this.playTone({ frequency: 1046.5, duration: 0.35, volume: 0.42, type: 'sine' });
-      return;
-    }
-
-    // Short ticks that rise as the countdown approaches zero
-    const freqBySecondsLeft = {
-      5: 523.25,  // C5
-      4: 587.33,  // D5
-      3: 659.25,  // E5
-      2: 783.99,  // G5
-      1: 987.77,  // B5
-    };
-
-    const frequency = freqBySecondsLeft[secondsLeft];
-    if (!frequency) return;
-
-    this.playTone({ frequency, duration: 0.12, volume: 0.28, type: 'triangle' });
+  playCompletion() {
+    this.playHorn({ freq: 523.25, dur: 1.5, vol: 0.34, cutoff: 2200 });
+    this.playHorn({ freq: 783.99, dur: 1.1, vol: 0.3, when: 0.4, cutoff: 2600 });
   }
 }
 

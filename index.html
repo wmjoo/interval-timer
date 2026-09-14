@@ -210,21 +210,25 @@
 
   /* Top Sets Indicator */
   .sets-indicator {
+    --dot-size: 15px;
+    --dot-gap: 9px;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--dot-gap);
     justify-content: center;
     align-items: center;
     margin-bottom: 10px;
     /* Clears the absolutely positioned clock and mute button above. */
     padding-top: 36px;
+    /* Exactly ten dots per row; the eleventh wraps. */
+    max-width: calc(10 * var(--dot-size) + 9 * var(--dot-gap));
   }
 
   .set-dot {
-    width: 20px;
-    height: 20px;
+    width: var(--dot-size);
+    height: var(--dot-size);
     border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.6);
     background: transparent;
     transition: all 0.3s ease;
   }

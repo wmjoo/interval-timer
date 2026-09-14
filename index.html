@@ -442,12 +442,24 @@
   }
 
   .player-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
     font-size: 0.72rem;
     opacity: 0.65;
     margin-top: 2px;
     white-space: nowrap;
+  }
+
+  .player-meta > span:first-child {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .player-time {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
   }
 
   .player-buttons {
@@ -632,7 +644,10 @@
       <div class="player-row">
         <div class="player-info">
           <div class="player-title" id="playerTitle">Background Music</div>
-          <div class="player-meta" id="playerMeta">Press play to start</div>
+          <div class="player-meta">
+            <span id="playerMeta">Press play to start</span>
+            <span class="player-time" id="playerTime">0:00 / 0:00</span>
+          </div>
         </div>
         <div class="player-buttons">
           <button class="player-btn" id="prevTrackBtn" aria-label="Previous track">
@@ -753,6 +768,7 @@ class MusicPlayer {
 
     this.titleEl = document.getElementById('playerTitle');
     this.metaEl = document.getElementById('playerMeta');
+    this.timeEl = document.getElementById('playerTime');
     this.playPauseBtn = document.getElementById('playPauseBtn');
     this.playPauseIcon = document.getElementById('playPauseIcon');
     this.prevBtn = document.getElementById('prevTrackBtn');
@@ -814,7 +830,16 @@ class MusicPlayer {
     audio.addEventListener('ended', () => this.handleEnded(deck));
     audio.addEventListener('playing', () => this.syncUI());
     audio.addEventListener('pause', () => this.syncUI());
+    ['timeupdate', 'loadedmetadata', 'durationchange', 'seeked'].forEach(event => {
+      audio.addEventListener(event, () => {
+        if (deck === this.activeDeck()) this.syncTime();
+      });
+    });
     return deck;
+  }
+
+  randomPos(deck) {
+    return deck.tracks.length ? Math.floor(Math.random() * deck.tracks.length) : 0;
   }
 
   buildDecks() {
@@ -823,9 +848,13 @@ class MusicPlayer {
     const next = {};
 
     this.deckKeys().forEach(key => {
-      const deck = previous[key] || this.createDeck();
+      const existing = previous[key];
+      const deck = existing || this.createDeck();
       deck.tracks = key === 'all' ? pool : pool.filter(t => t.group === key);
-      deck.pos = Math.min(deck.pos, Math.max(0, deck.tracks.length - 1));
+      // A fresh deck starts somewhere random so the same track isn't first every session.
+      deck.pos = existing
+        ? Math.min(deck.pos, Math.max(0, deck.tracks.length - 1))
+        : this.randomPos(deck);
       next[key] = deck;
     });
 
@@ -887,7 +916,7 @@ class MusicPlayer {
 
     const deck = this.activeDeck();
     const index = current ? deck.tracks.findIndex(t => t.id === current.id) : -1;
-    deck.pos = index >= 0 ? index : 0;
+    deck.pos = index >= 0 ? index : this.randomPos(deck);
     this.loadDeck(deck, wasPlaying);
   }
 
@@ -1038,6 +1067,18 @@ class MusicPlayer {
     this.duckTimer = setTimeout(() => { audio.volume = this.baseVolume; }, ms);
   }
 
+  formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+  }
+
+  syncTime() {
+    const audio = this.activeDeck().audio;
+    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+    this.timeEl.textContent = `${this.formatTime(audio.currentTime)} / ${this.formatTime(duration)}`;
+  }
+
   syncUI() {
     const deck = this.activeDeck();
     const track = this.currentTrack();
@@ -1070,6 +1111,7 @@ class MusicPlayer {
       : `Streaming ${this.pool().length} tracks from the Internet Archive`;
 
     this.splitToggle.checked = this.splitPhases;
+    this.syncTime();
   }
 }
 
